@@ -526,6 +526,7 @@ Following steps were performed: -
 The reason was nodeSelector had failed to select the node.
 
 Then looking into genesis.sh, it was identified that a label was applied to the node. Hence following command was executed.
+
 	```
 	$ kubectl label node <node_name> --overwrite beta.kubernetes.io/fluentd-ds-ready=true calico-etcd=enabled kube-dns=enabled kube-ingress=enabled kubernetes-apiserver=enabled kubernetes-controller-manager=enabled kubernetes-etcd=enabled kubernetes-scheduler=enabled promenade-genesis=enabled ucp-control-plane=enabled maas-rack=enabled maas-region=enabled openstack-control-plane=enabled openvswitch=enabled openstack-l3-agent=enabled node-exporter=enabled fluentd=enabled openstack-control-plane=enabled openstack-nova-compute=enabled openstack-libvirt=kernel utility=enabled
 	```
@@ -549,21 +550,21 @@ Then looking into genesis.sh, it was identified that a label was applied to the 
 
 This one is the same as Approach 2, with the following differences 
 
-	1.	Chart group “cluster-bootstrap-aiab” has not been modified.
+1.	Chart group “cluster-bootstrap-aiab” has not been modified.
 
-	2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
+2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
 	
-	3. 	New certificated were created for the first few chart group members of “cluster-bootstrap-aiab”, to see the behavior.
+3. 	New certificated were created for the first few chart group members of “cluster-bootstrap-aiab”, to see the behavior.
 	
-	4. 	The new certificates were created for the Aramada, auxillery etcd pod as well and placed at the respective location. Some of the new certificates created in step 3 were also placed inside the manifest.yaml
+4. 	The new certificates were created for the Aramada, auxillery etcd pod as well and placed at the respective location. Some of the new certificates created in step 3 were also placed inside the manifest.yaml
 	
-	NOTE: For generation of the certificate following files were referred: -
-	
-	1. ~/deploy/treasuremap/site/aiab/pki/pki-catalog.yaml, to get the CN, group and Host information.
-	
-	2. Old logs, certificate files and the certificates.yaml.
-	
-	3. manifest.yaml which is used by the armada for the deployment.
+NOTE: For generation of the certificate following files were referred: -
+
+1. ~/deploy/treasuremap/site/aiab/pki/pki-catalog.yaml, to get the CN, group and Host information.
+
+2. Old logs, certificate files and the certificates.yaml.
+
+3. manifest.yaml which is used by the armada for the deployment.
 
 **Challenges faced:** -
 
@@ -662,7 +663,6 @@ This one is the same as Approach 2, with the following differences
 	```
 8.	Fetch the Treasuremap from the GIT
 	```
-
 	$ mkdir -p /root/deploy
 
 	$ cd /root/deploy
@@ -678,25 +678,25 @@ This one is the same as Approach 2, with the following differences
 	$ ./airship-in-a-bottle.sh 
 	```
 
-**Challenges faced:** -
+**Challenges faced:** 
 
-	1.	The packages were not getting installed using the local ubuntu repository since the packages needed authentication.
+1.	The packages were not getting installed using the local ubuntu repository since the packages needed authentication.
 
-	**Solution**: - For this, following files were modified to include the flag “--allow-unauthenticated” wherever apt command was invoked for installing the packages.
-	
+**Solution**: - For this, following files were modified to include the flag “--allow-unauthenticated” wherever apt command was invoked for installing the packages.
+
 	a.	tools/deployment/aiab/common/deploy-airship.sh
 
 	b.	tools/airship
 
-	The apt-get install command for docker-ce and socat is also invoked from the genesis.sh. Was unable to locate the location from where the command was being created and written in genesis.sh, so applied a hack in the “deploy-airship.sh” to sleep for 100 seconds and in the mean time manually added the flag.
+The apt-get install command for docker-ce and socat is also invoked from the genesis.sh. Was unable to locate the location from where the command was being created and written in genesis.sh, so applied a hack in the “deploy-airship.sh” to sleep for 100 seconds and in the mean time manually added the flag.
 
-	2.	The control landed in a waiting state to get API response with the cluster. 
+2.	During the execution of the script, the control landed in a waiting state to get API response with the cluster. 
 
-	**Solution**: - It was observed that no docker container was deployed and kubelet was also active. Also, the static pod manifests were also placed at location /etc/kubernetes/manifests.
-	
-	On further debugging it was observed that /etc/hosts file get updated by promenade, hence the entry for the myregistydomain.com (out local docker registry) was removed. 
+**Solution**: - It was observed that no docker container was deployed and kubelet was also active. Also, the static pod manifests were present at location /etc/kubernetes/manifests.
 
-	On adding the entry, it proceeded further with the deployment.
+On further debugging it was observed that /etc/hosts file get updated by **Promenade**, hence the entry for the myregistydomain.com (our local docker registry) was removed. 
+
+On adding the entry, it went ahead with the deployment of the kubernetes and UCP pods.
 
 **Following are some screen shots captured while using the local ubuntu repository and docker registry.**
  
