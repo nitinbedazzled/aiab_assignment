@@ -413,25 +413,25 @@ Following sequences of tasks were performed: -
 
 1.	In this approach, genesis also places the control node manifests like Kubernetes-apiserver, Kubernetes-controller-manage, Kubernetes-scheduler and Kubernetes-etcd also which were created by the Promenade (deployed as Static Pods).
 
-Solution: - Since the files added by the genesis.sh did not deploy the running pods as the port were already used by the static pods deployed by kubeadm, hence those manifests were removed.
+**Solution:** - Since the files added by the genesis.sh did not deploy the running pods as the port were already used by the static pods deployed by kubeadm, hence those manifests were removed.
 
 2.	After fixing the above issue, it was observed that the Bootstrap armada pod was not running.
 
-Solution: - On debugging and it was observed that the bootstrap pod contained 4 containers: - 
+**Solution:** - On debugging and it was observed that the bootstrap pod contained 4 containers: - 
 
-a.	Tiller
+	a.	Tiller
 
-b.	Armada
+	b.	Armada
 
-c.	Monitor
+	c.	Monitor
 
-d.	API-Server
+	d.	API-Server
 
 The API server was running on port 6444 and was pointing to the wrong ETCD endpoint as it was looking for the port 12379 and 22379 whereas the etcd deployed by the kubeadm was running on the 2379. Also, certificates for the etcd access were wrong. Fixed the etcd endpoint and certificates, now POD was running but still Armada was not deploying anything.
 
 3.	On the Re-Execution of the same approach, it was observed that the real reason for the problem #2 was that auxiliary ETCD static POD was not deployed. This time I had used the modified version of the bootstrap armada with different certificates and few more changes which I had done earlier to have a work-around for problem #2, hence there was a TLS handshaking issue.
 
-Solution: - This approach was left as it was still using **Promenade** and due to stopping the execution of the airship-in-a-bottle.sh in the middle, there was a chance that system may get corrupted.
+**Solution:** - This approach was left as it was still using **Promenade** and due to stopping the execution of the airship-in-a-bottle.sh in the middle, there was a chance that system may get corrupted.
 
 ### 6.5 Further understanding building
 
@@ -450,77 +450,137 @@ https://youtu.be/ckcLnBqGQrQ
 
 ### 6.6 Solution Approach 2
 
-In this one, I removed the usage of “airship-in-a-bottle.sh” and PROMENADE. I tried to deploy the cluster (with HELM2) and then deploy the bootstrap armada using the old manifests (saved using the initial days for reference).
+In this approach, removed the usage of “airship-in-a-bottle.sh” and Promenade. 
+
+In this tried to deploy the cluster (with HELM2) and then deploy the bootstrap armada using the old manifests (saved during the initial understanding building for reference).
 
 Following steps were performed: -
+
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
-2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
-3.	On this Node, all the taints were removed, and now the HELM 2 was deployed.
+
+2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section **Cluster creation without using the Kubeadm Binaries**.
+
+3.	On this Node, all the taints were removed, and now the HELM 2 was deployed. (With taint associated, Tiller would not have been deployed)
+
 4.	A Service account was created for the Tiller and was initiated using the 
-$ helm init –service-account tiller
+	```
+	$ helm init –service-account tiller
+	```
 5.	In this bootstrap armada pod definition was modified to use only two containers: -
+	
 	a.	Armada
+	
 	b.	Monitor
-Armada container was modified to connect with the Tiller that came with the HELM2.
+	
+	Armada container was modified to connect with the Tiller that came with the HELM2.
+	
 6.	The chart group “cluster-bootstrap-aiab” in the manifest.yaml used by Armada container was modified. Following chart groups were removed: -
+	
 	a.	podsecuritypolicy
+	
 	b.	kubernetes-proxy
+	
 	c.	kubernetes-container-networking
+	
 	d.	kubernetes-dns
+	
 	e.	kubernetes-etcd
+	
 	f.	kubernetes-haproxy
+	
 	g.	kubernetes-core
+
+	NOTE: - Reason for removing was that all these components were already deployed using the node creation.
+	
 7.	On analyzing all the remaining members (and their dependencies as mentioned in the manifest.yaml) of the chart group “cluster-bootstrap-aiab “, could not find the dependency on the certificated. 
-8.	Created the new private key and certificate for the Armada (at location /etc/genesis/armada/auth/pki/) and updated kubeconfig file (at location /etc/genesis/armada/auth) as well so that using the “armada” user cluster could be accessed. 
+
+8.	Created the new private key and certificate for the Armada (at location /etc/genesis/armada/auth/pki/) and updated kubeconfig file (at location /etc/genesis/armada/auth) as well so that the “armada” user could be used to access the cluster. 
+
 9.	Step 8 was repeated for armada-cli as well at location /etc/genesis/armada-cli/auth/pki/ and /etc/genesis/armada-cli/auth respectively
 
-Challenges faced during this approach were: - 
-1.	On looking at the logs generated by the Armada (at location /var/log/armada/bootstrap-armada.log) following errors were observer: -
-2020-05-19 17:04:39.628 8 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/ssl_.py", line 358, in ssl_wrap_socket
-2020-05-19 17:04:39.628 8 ERROR armada.cli     context.load_cert_chain(certfile, keyfile)
-2020-05-19 17:04:39.628 8 ERROR armada.cli ssl.SSLError: [SSL] PEM lib (_ssl.c:2829)
 
-Solution: - To overcome this following thing were done:
-a.	Referred the following link and checked for the openssl version was it over 1.0. and it was observed that “urllib3” was not present.
-https://airshipit.readthedocs.io/projects/armada/en/latest/operations/guide-troubleshooting.html
-b.	Along with “urllib3”, there were some dependent python packages that were needed. Referred to the old captured logs and saw few of them were installed by the genesis.sh. So installed all of them.
-c.	Still the error persisted, and it was later identified that the armada public key was not correctly generated. On creating it again, it worked.
+**Challenges faced during this approach were:**
+
+1.	On looking at the logs generated by the Armada (at location /var/log/armada/bootstrap-armada.log) following errors were observed: -
+	```
+	2020-05-19 17:04:39.628 8 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/ssl_.py", line 358, in ssl_wrap_socket
+	
+	2020-05-19 17:04:39.628 8 ERROR armada.cli     context.load_cert_chain(certfile, keyfile)
+	
+	2020-05-19 17:04:39.628 8 ERROR armada.cli ssl.SSLError: [SSL] PEM lib (_ssl.c:2829)
+	```
+**Solution:** - To overcome this following steps were executed:
+
+	a.	Referred the following link and checked for the openssl version was it over 1.0. and it was observed that “urllib3” was not present.
+	
+	https://airshipit.readthedocs.io/projects/armada/en/latest/operations/guide-troubleshooting.html
+
+	b.	Along with “urllib3”, there were some dependent python packages that were needed. Referred to the old captured logs and saw few of them were installed by the genesis.sh. So installed all of them manually on the setup. Also looked at the storyboard to get some idea on the similar issues faced earlier.
+
+	c.	Still the error persisted, and it was later identified that the armada public key was not correctly generated. On creating it again, it worked.
 
 2.	Armada started the deployment of the first chart group “ingress-kube-system” but it timed-out. On looking at the pod status, it was in pending state.
 
-Solution: - In this case scheduler pod was still in running state. So, looked at the description of the pod to understand the reason for not being deployed. 
+**Solution**: - In this case scheduler pod was still in running state. So, looked at the description of the pod to understand the reason why the pod not scheduled. 
+
 The reason was nodeSelector had failed to select the node.
-Then looking into genesis.sh, it was identified that a label was applied to ensure where exactly pod gets deployed. Hence following command was executed.
-$ kubectl label node <node_name> --overwrite beta.kubernetes.io/fluentd-ds-ready=true calico-etcd=enabled kube-dns=enabled kube-ingress=enabled kubernetes-apiserver=enabled kubernetes-controller-manager=enabled kubernetes-etcd=enabled kubernetes-scheduler=enabled promenade-genesis=enabled ucp-control-plane=enabled maas-rack=enabled maas-region=enabled openstack-control-plane=enabled openvswitch=enabled openstack-l3-agent=enabled node-exporter=enabled fluentd=enabled openstack-control-plane=enabled openstack-nova-compute=enabled openstack-libvirt=kernel utility=enabled
 
-3.	After the deployment of the second chart group “osh-infra-nfs-provisioner” it again got stuck with the following error from the armada: - 
+Then looking into genesis.sh, it was identified that a label was applied to the node. Hence following command was executed.
+	```
+	$ kubectl label node <node_name> --overwrite beta.kubernetes.io/fluentd-ds-ready=true calico-etcd=enabled kube-dns=enabled kube-ingress=enabled kubernetes-apiserver=enabled kubernetes-controller-manager=enabled kubernetes-etcd=enabled kubernetes-scheduler=enabled promenade-genesis=enabled ucp-control-plane=enabled maas-rack=enabled maas-region=enabled openstack-control-plane=enabled openvswitch=enabled openstack-l3-agent=enabled node-exporter=enabled fluentd=enabled openstack-control-plane=enabled openstack-nova-compute=enabled openstack-libvirt=kernel utility=enabled
+	```
+	
+3.	After the deployment of the second chart group “osh-infra-nfs-provisioner” it again got stuck with the following error from the armada: -
+	```
+	2020-05-19 11:00:53.589 94 ERROR armada.cli [-] Caught unexpected exception: armada.handlers.lock.LockException: Unable to acquire lock before timeout
+	
+	2020-05-19 11:00:53.589 94 ERROR armada.cli Traceback (most recent call last):
+	
+	2020-05-19 11:00:53.589 94 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/armada/cli/__init__.py", line 38, in safe_invoke
+	
+	2020-05-19 11:00:53.589 94 ERROR armada.cli     self.invoke()
+	
+	2020-05-19 11:00:53.589 94 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/armada/cli/apply.py", line 219, in invoke
+	```
 
-Solution: -
-Could not fix this. Thought that may be because of the older chart groups skipped. So, went to approach 3.
+**Solution:** - Could not fix this issue. On referring to the you-tube link (shared in the previous session), thought that may be because of the older chart groups removed, some required deployments or configurations were not placed. 
 
-### Solution Approach 3
+### 6.7 Solution Approach 3
 
 This one is the same as Approach 2, with the following differences 
-1.	Chart group “cluster-bootstrap-aiab” has not been modified.
-2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
-New certificated were created for the first few chart group members of “cluster-bootstrap-aiab”, to see the behavior.
 
-Challenge faced: -
+	1.	Chart group “cluster-bootstrap-aiab” has not been modified.
+
+	2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
+	
+	3. 	New certificated were created for the first few chart group members of “cluster-bootstrap-aiab”, to see the behavior.
+
+**Challenges faced:** -
+
 1.	On deployment of the bootstrap armada and auxiliary ETCD static pods, following error is observed: -
-2020-05-20 11:40:49.350 10 ERROR armada.cli [-] Caught unexpected exception: urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='localhost', port=6444): Max retries exceeded with url: /apis/armada.process/v1/namespaces/kube-system/locks (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f43e4bfb908>: Failed to establish a new connection: [Errno 111] Connection refused',))
-2020-05-20 11:40:49.350 10 ERROR armada.cli Traceback (most recent call last):
-2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/connection.py", line 157, in _new_conn
-2020-05-20 11:40:49.350 10 ERROR armada.cli     (self._dns_host, self.port), self.timeout, **extra_kw
-2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/connection.py", line 84, in create_connection
-2020-05-20 11:40:49.350 10 ERROR armada.cli     raise err
-2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/connection.py", line 74, in create_connection
-2020-05-20 11:40:49.350 10 ERROR armada.cli     sock.connect(sa)
-2020-05-20 11:40:49.350 10 ERROR armada.cli ConnectionRefusedError: [Errno 111] Connection refused
+	```
+	2020-05-20 11:40:49.350 10 ERROR armada.cli [-] Caught unexpected exception: urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='localhost', port=6444): Max retries exceeded with url: /apis/armada.process/v1/namespaces/kube-system/locks (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f43e4bfb908>: Failed to establish a new connection: [Errno 111] Connection refused',))
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli Traceback (most recent call last):
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/connection.py", line 157, in _new_conn
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli     (self._dns_host, self.port), self.timeout, **extra_kw
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/connection.py", line 84, in create_connection
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli     raise err
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/connection.py", line 74, in create_connection
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli     sock.connect(sa)
+	
+	2020-05-20 11:40:49.350 10 ERROR armada.cli ConnectionRefusedError: [Errno 111] Connection refused
+	```
+**Solution:** - .
 
-Solution: - This one still needs to be debugged.
 
-
-## Airship in a Bottle using local docker registry and Ubuntu Repository
+## 7. Airship in a Bottle using local docker registry and Ubuntu Repository
 
 ### Pre-Requisite
 
