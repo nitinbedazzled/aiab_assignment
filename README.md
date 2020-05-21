@@ -356,19 +356,19 @@ Next, I tried to understand airship-in-a-bottle.sh to understand what exactly wa
 
 Following is the understanding: -
 
-1.	“airship-in-a-bottle.sh” checked for the minimum configuration and picked up the information like hostname, interface, IP address etc and invoked the second script “deploy-airship.sh”
+1.	**“airship-in-a-bottle.sh”** checked for the minimum configuration and picked up the information like hostname, interface, IP address etc and invoked the second script “deploy-airship.sh”
 
-2.	“deploy-airship.sh” did the following: -
+2.	**“deploy-airship.sh”** did the following: -
 
 	a.	It installed the docker.io, related dependencies and configure the docker.
 
-	b.	PEGLEG was invoked to aggregate all the artifacts into a single file which could later be used to deploy the airship in a bottle. It resulted in a “treasuremap.yaml” inside the folder collected.
+	b.	**Pegleg** was invoked to aggregate all the artifacts into a single file which could later be used to deploy the airship in a bottle. It resulted in a “treasuremap.yaml” inside the folder collected.
 	
-	c.	PROMENADE is used to first create all the required certificates and store them under the folder genesis in the file name “certificates.yaml”.
+	c.	**Promenade** is used to first create all the required certificates and store them under the folder genesis in the file name “certificates.yaml”.
 	
-	d.	PROMENADE is now used to generate the genesis.sh which in turn will use the created “certificates.yaml” and “treasuremap.yaml”
+	d.	**Promenade** is now used to generate the genesis.sh which in turn will use the created “certificates.yaml” and “treasuremap.yaml”
 	
-	e.	Post the generation of genesis.sh, it is executed which will: -
+	e.	Post the generation of **genesis.sh**, it is triggered which will: -
 		
 		i.	Place the segregated certificates, charts to be used.
 		
@@ -387,7 +387,7 @@ Following is the understanding: -
 
 A high-level folder structure (not covering all the files) was created so that it is easy to track the files moving forward. (It was mostly focused from the point of Airship in a Bottle)
 
-For this PEGLEG documentation was also read to get more clarity: -
+For this **Pegleg** documentation was also referred to get more clarity: -
 
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
 
@@ -397,36 +397,50 @@ This is not extensive but gives a high-level view.
  
 ### 6.4 Solution Approach 1
 
-For this I did the following tasks: -
+High level approach was to use both airship-in-a-bottle.sh and the kubeadm cluster to deploy the Airship in a Bottle. 
+
+Following sequences of tasks were performed: -
+
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
-2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
+
+2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section **Cluster creation without using the Kubeadm Binaries**.
+
 3.	Executed “airship-in-a-bottle.sh” till the point genesis.sh is created.
+
 4.	Executed the genesis.sh till the time all the files are extracted and placed at the desired location, including the manifest.yaml used by the Armada and other public and private keys etc.
 
-Challenges faced during this approach were: - 
+**Challenges faced during this approach were**: - 
 
-1.	At this point, genesis also places the control node manifests like Kubernetes-apiserver, Kubernetes-controller-manage, Kubernetes-scheduler and Kubernetes-etcd also which were created by the Promenade (deployed as Static Pods).
+1.	In this approach, genesis also places the control node manifests like Kubernetes-apiserver, Kubernetes-controller-manage, Kubernetes-scheduler and Kubernetes-etcd also which were created by the Promenade (deployed as Static Pods).
 
-Solution: - Since the files added by the Genesis.sh did not deploy the running pod as the port was already used, hence those manifests were removed.
+Solution: - Since the files added by the genesis.sh did not deploy the running pods as the port were already used by the static pods deployed by kubeadm, hence those manifests were removed.
 
-2.	After fixing the above issue, I observed that the Bootstrap armada pod was not running.
+2.	After fixing the above issue, it was observed that the Bootstrap armada pod was not running.
 
-Solution: - I debugged and saw that it had 4 containers: - 
+Solution: - On debugging and it was observed that the bootstrap pod contained 4 containers: - 
+
 a.	Tiller
+
 b.	Armada
+
 c.	Monitor
+
 d.	API-Server
-This API server was running on port 6444 and was pointing to the wrong ETCD endpoint as it was looking for the port 12379 and 22379 whereas the etcd deployed by the kubeadm was running on the 2379. Also, certificate issue was also there. Fixed that, now POD was running but still Armada was not deploying anything.
 
-3.	On the Re-Execution of the same approach, I realized the real reason for the problem 2 was that auxiliary ETCD static POD was not deployed. This time I had used the modified version of the Bootstrap Armada with different certificates and few more changes which I had done earlier to have a work-around problem 2, hence there was a TLS handshaking issue.
+The API server was running on port 6444 and was pointing to the wrong ETCD endpoint as it was looking for the port 12379 and 22379 whereas the etcd deployed by the kubeadm was running on the 2379. Also, certificates for the etcd access were wrong. Fixed the etcd endpoint and certificates, now POD was running but still Armada was not deploying anything.
 
-Solution: - This approach was left as it was still using PROMENADE and due to mid-run of the existing tools, there was a chance that system may get corrupted.
+3.	On the Re-Execution of the same approach, it was observed that the real reason for the problem #2 was that auxiliary ETCD static POD was not deployed. This time I had used the modified version of the bootstrap armada with different certificates and few more changes which I had done earlier to have a work-around for problem #2, hence there was a TLS handshaking issue.
 
-### Further understanding building
+Solution: - This approach was left as it was still using **Promenade** and due to stopping the execution of the airship-in-a-bottle.sh in the middle, there was a chance that system may get corrupted.
 
-Just to understand more on how PROMENADE and ARMADA works, searched for their operational documents and read through it to get more information about them.
+### 6.5 Further understanding building
+
+Just to understand more on how **Promenade** and **Armada** works, searched for their operational documents and read through them to get more information about them.
+
 Following links were read for this purpose
+
 1.	https://airshipit.readthedocs.io/projects/armada/en/latest/readme.html
+
 2.	https://airshipit.readthedocs.io/projects/promenade/en/latest/index.html
 
 Along with this a You-Tube video (from a 2018 conference) was also referred to increase the further understanding on the airship.
@@ -434,7 +448,7 @@ Along with this a You-Tube video (from a 2018 conference) was also referred to i
 https://youtu.be/ckcLnBqGQrQ
 
 
-### Solution Approach 2
+### 6.6 Solution Approach 2
 
 In this one, I removed the usage of “airship-in-a-bottle.sh” and PROMENADE. I tried to deploy the cluster (with HELM2) and then deploy the bootstrap armada using the old manifests (saved using the initial days for reference).
 
