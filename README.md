@@ -1,4 +1,4 @@
-### Airship in a Bottle
+# Airship in a Bottle
 ===================
 
 ## Problem Statement
@@ -14,7 +14,7 @@ The activity was to be able to deploy “Airship in a Bottle” with following o
 Following link was provided: -
 https://github.com/airshipit/treasuremap
 
-Activities
+## Activities
 ----------
 
 For this the first activity I undertook had planned to perform the tasks independently first and once completed, to combine them as a complete solution.
@@ -26,7 +26,7 @@ A local Ubuntu repository was also created comprising of all the packages requir
 
 It was later also tried to deploy the “Airship in a Bottle” using the method defined in the treasuremap, with access to the local docker registry and Local Ubuntu Repository. Refer to section Airship in a Bottle using local docker registry and Ubuntu Repository for the steps executed and changes done to make it run.
 
-Airship understanding and Deployment
+## Airship understanding and Deployment
 ------------------------------------
 
 This activity was started by referring to the GIT link shared for the treasure map https://github.com/airshipit/treasuremap.
@@ -34,7 +34,7 @@ From this link, the documentation was opened and was used to make the early unde
 During the documentation only came across the link referring to the document for the Airship in a Bottle (https://github.com/airshipit/treasuremap/blob/master/tools/deployment/aiab/README.rst).
 Based on the “aiab” link and information gathered through the documentation tried to deploy the Airship in a Bottle using the details present in the TreasureMap.
 
-“Airship in a Bottle” Deployment using the TreasureMap
+### “Airship in a Bottle” Deployment using the TreasureMap
 -------------------------------------------------------
 NOTE: - In this task Local Ubuntu repository or the Docker Registry was not used.
 
@@ -56,7 +56,7 @@ NOTE: - This is the maximum RAM I could provide due to limited resources.
 
 NOTE: - Post the second iteration, since the execution went ahead and deployed multiple charts, backup of the generated files was taken, so that it can referred or used later.
 
-Code and captured logs Understanding
+### Code and captured logs Understanding
 ------------------------------------
 
 Next, I tried to understand airship-in-a-bottle.sh to understand what exactly was happening under the hood.
@@ -73,16 +73,16 @@ Following is my understanding: -
 		iii.	These static pods also include the pods to deploy armada bootstrapping and auxiliary ETCD. 
 		iv.	Start the kubelet and let armada deploy the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
 
-Treasuremap Folder Structuring
+### Treasuremap Folder Structuring
 ------------------------------
 A high-level folder structure (not covering all the files) was created so that it is easy to track the files as moved forward. (It was mostly focused from the point of Airship in a Bottle)
 For this PEGLEG documentation was also read to get more clarity: -
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
 This is not extensive but gives a high-level view.
 
-./Diagrams/Folder_structure.png
+:: ./Diagrams/Folder_structure.png
  
-Solution Approach 1
+### Solution Approach 1
 -------------------
 For this I did the following tasks: -
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
@@ -109,7 +109,7 @@ This API server was running on port 6444 and was pointing to the wrong ETCD endp
 
 Solution: - This approach was left as it was still using PROMENADE and due to mid-run of the existing tools, there was a chance that system may get corrupted.
 
-Further understanding building
+### Further understanding building
 ------------------------------
 
 Just to understand more on how PROMENADE and ARMADA works, searched for their operational documents and read through it to get more information about them.
@@ -122,7 +122,7 @@ Along with this a You-Tube video (from a 2018 conference) was also referred to i
 https://youtu.be/ckcLnBqGQrQ
 
 
-Solution Approach 2
+### Solution Approach 2
 -------------------
 In this one, I removed the usage of “airship-in-a-bottle.sh” and PROMENADE. I tried to deploy the cluster (with HELM2) and then deploy the bootstrap armada using the old manifests (saved using the initial days for reference).
 
@@ -172,7 +172,7 @@ $ kubectl label node <node_name> --overwrite beta.kubernetes.io/fluentd-ds-ready
 Solution: -
 Could not fix this. Thought that may be because of the older chart groups skipped. So, went to approach 3.
 
-Solution Approach 3
+### Solution Approach 3
 -------------------
 This one is the same as Approach 2, with the following differences 
 1.	Chart group “cluster-bootstrap-aiab” has not been modified.
@@ -193,17 +193,18 @@ Challenge faced: -
 
 Solution: - This one still needs to be debugged.
 
-Cluster creation without using the Kubeadm Binaries
+## Cluster creation without using the Kubeadm Binaries
 ---------------------------------------------------
 
-Pre-Requisite
+### Pre-Requisite
+-----------------
 1.	2 Ubuntu 16.04 virtual machines, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
 
 NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
 
-Steps Performed
+### Steps Performed
 1.	Switch to the root user.
 $ sudo su -
 
@@ -256,17 +257,17 @@ On the Master node
 $ kubectl get nodes
 
 
-Docker Registry Creation
+## Docker Registry Creation
 ------------------------
 
-Pre-Requisite
+### Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage
 2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
 3.	Host Network configured with SSH daemon running
 4.	Packages like curl are installed on the machine.
 NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
 
-Steps Performed
+### Steps Performed
 	Login to the machine with 32 GB Storage option.
 1.	Switch to the root user.
 $ sudo su –
@@ -298,7 +299,8 @@ $ openssl req -newkey rsa:4096 -nodes -sha256 -subj “/CN=myregistrydomain.com�
 <IP address>  myregistrydomain.com
 NOTE: We need to add an entry for the myregistrydomain.com on all the docker nodes from where we need to access the local registry. And IP address would be for the machine which is hosting the registry.
 
-Insert a Docker image in the local registry
+### Insert a Docker image in the local registry
+
 Login to the machine hosting the docker registry
 1.	Login to docker registry created above
 $ docker login myregistrydomain.com:443
@@ -318,7 +320,7 @@ $ docker image rm myregistrydomain.com:443/my-ubuntu
 $ docker image rm ubuntu:16.04
 $ docker pull myregistrydomain.com:443/my-ubuntu
 
-Testing of the Registry
+### Testing of the Registry
 Login to the second machine with 10 GB storage
 1.	Switch to the root user.
 $ sudo su –
@@ -339,16 +341,16 @@ Login Succeeded
 4.	Try to pull the ubuntu:16.04 image from the local repository
 $ docker pull myregistrydomain.com:443/my-ubuntu
 
-Local Ubuntu Repository Creation
+## Local Ubuntu Repository Creation
 --------------------------------
 
-Pre-Requisite
+### Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
 4.	Access to the machine and captured logs where “Airship in a Bottle” Deployment using the TreasureMap was executed.
 
-Steps Performed
+### Steps Performed
 1.	Switch to the root user.
 $ sudo su –
 
@@ -370,16 +372,17 @@ deb file:/usr/local/mydebs ./
 	$ apt-get update
 With this the packages present in the mydebs can be installed in the offline mode as well.
 
-Airship in a Bottle using local docker registry and Ubuntu Repository
+## Airship in a Bottle using local docker registry and Ubuntu Repository
 ---------------------------------------------------------------------
 
-Pre-Requisite
+### Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 4 GB RAM, 9 vCPUs and 32 GB storage for Airship deployment.
 2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage with a working local docker registry. (It was created using the steps mentioned in Docker Registry Creation section.
 3.	Host Network configured with SSH daemon running
 4.	Packages like curl are installed on the machine.
 5.	Local Ubuntu Repository folder. As created in the section Local Ubuntu Repository Creation.
-Steps Performed
+
+### Steps Performed
 1.	Switch to the root user.
 $ sudo su –
 
