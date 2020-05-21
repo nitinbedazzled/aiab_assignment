@@ -336,7 +336,7 @@ NOTE: - In this task Local ubuntu repository or the docker registry was not used
 
 1.	A VM was created with Ubuntu 16.04, having 4 vCPUs, 9 GB RAM, 30 GB storage. 
 
-NOTE: - This is the maximum RAM I could provide due to limited resources.
+	NOTE: - This is the maximum RAM I could provide due to limited resources.
 
 2.	Script airship-in-a-bottle.sh was modified to by-pass the system configuration related checks.
 
@@ -554,6 +554,16 @@ This one is the same as Approach 2, with the following differences
 	2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
 	
 	3. 	New certificated were created for the first few chart group members of “cluster-bootstrap-aiab”, to see the behavior.
+	
+	4. 	The new certificates were created for the Aramada, auxillery etcd pod as well and placed at the respective location. Some of the new certificates created in step 3 were also placed inside the manifest.yaml
+	
+	NOTE: For generation of the certificate following files were referred: -
+	
+	1. ~/deploy/treasuremap/site/aiab/pki/pki-catalog.yaml, to get the CN, group and Host information.
+	
+	2. Old logs, certificate files and the certificates.yaml.
+	
+	3. manifest.yaml which is used by the armada for the deployment.
 
 **Challenges faced:** -
 
@@ -577,12 +587,12 @@ This one is the same as Approach 2, with the following differences
 	
 	2020-05-20 11:40:49.350 10 ERROR armada.cli ConnectionRefusedError: [Errno 111] Connection refused
 	```
-**Solution:** - .
+**Solution:** - This is still not resolved. On further analysis, it was observed that even the auxillary ETCD Pod which hosts a cluster of the etcd were giving the TLS certificate issue. So it was identified to be something with certificate it was not right. Chances of error were high as a lot certificates were manually created and placed at multiple locations including the manifest.yaml file referred by the armada as well.
 
 
 ## 7. Airship in a Bottle using local docker registry and Ubuntu Repository
 
-### Pre-Requisite
+### 7.1 Pre-Requisite
 
 1.	1 Ubuntu 16.04 virtual machine, with 4 GB RAM, 9 vCPUs and 32 GB storage for Airship deployment.
 2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage with a working local docker registry. (It was created using the steps mentioned in Docker Registry Creation section.
@@ -590,7 +600,7 @@ This one is the same as Approach 2, with the following differences
 4.	Packages like curl are installed on the machine.
 5.	Local Ubuntu Repository folder. As created in the section Local Ubuntu Repository Creation.
 
-### Steps Performed
+### 7.2 Steps Performed
 
 1.	Switch to the root user.
 $ sudo su –
