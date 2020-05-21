@@ -4,15 +4,15 @@
 
 The activity was to be able to deploy “Airship in a Bottle” with following tasks to be completed while performing the activity: -
 
-Task 1. Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
+**Task 1.** Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
 
-Task 2. Setup a local ubuntu repo to install other packages if required. Don't directly install packages from ubuntu mirrors or any other public repos.
+**Task 2.** Setup a local ubuntu repo to install other packages if required. Don't directly install packages from ubuntu mirrors or any other public repos.
 
-Task 3. Don’t use any docker images from public repos (e.g.: quay.io, dockerhub.com, gcr.io etc.). Setup a local docker images registry for docker images. 
+**Task 3.** Don’t use any docker images from public repos (e.g.: quay.io, dockerhub.com, gcr.io etc.). Setup a local docker images registry for docker images. 
 
-Task 4. Modify airship manifest(s) to use the docker images and other packages from local repos and registries.  
+**Task 4.** Modify airship manifest(s) to use the docker images and other packages from local repos and registries.  
 
-Task 5. Write the script to automate whole process in any language (Golang is preferred though). Try to make the deployment as automated as possible.
+**Task 5.** Write the script to automate whole process in any language (Golang is preferred though). Try to make the deployment as automated as possible.
 
 Following link was provided: -
 
@@ -26,18 +26,284 @@ The critical area of this planning was to understand and then to be able to depl
 
 Following tasks were performed to accomplish the solution.
 
-Task 1. A separate Cluster was created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section **Cluster creation without using the kubeadm binaries** for more details on the steps performed for achieving this task.
+**Task 1.** A separate Cluster was created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section **Cluster creation without using the kubeadm binaries** for more details on the steps performed for achieving this task.
 
-Task 2. Local ubuntu repository was also comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section **Local Ubuntu Repository Creation** for more details about the steps performed.
+**Task 2.** Local ubuntu repository was also comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section **Local Ubuntu Repository Creation** for more details about the steps performed.
 
-Task 3. Local Docker Registry was created on a separate machine comprising of all the required images. Steps for creating the Docker Registry are captured under the section **Docker Registry Creation**.
+**Task 3.** Local Docker Registry was created on a separate machine comprising of all the required images. Steps for creating the Docker Registry are captured under the section **Docker Registry Creation**.
 
-Task 4a. The focus area of the task was to understand what Airship is and try to be familiar with the Treasure Map link provided. Based on the understanding multiple approaches were tried to deploy “Airship in a Bottle” using the kubeadm. 
+**Task 4a.** The focus area of the task was to understand what Airship is and try to be familiar with the Treasure Map link provided. Based on the understanding multiple approaches were tried to deploy “Airship in a Bottle” using the kubeadm. 
 Various approaches undertaken to understand and deploy “Airship in a bottle” are covered under section **Airship understanding and Deployment**.
 
-Task 4b. Deployed the “Airship in a Bottle” using the method defined in the treasuremap. This Airship accessed the local Docker Registry and local Ubuntu Repository for the iamges and the binaries. Refer section **Airship in a Bottle using local docker registry and Ubuntu Repository** for the steps executed and changes done to make it run.
+**Task 4b.** Deployed the “Airship in a Bottle” using the method defined in the treasuremap. This Airship accessed the local Docker Registry and local Ubuntu Repository for the iamges and the binaries. Refer section **Airship in a Bottle using local docker registry and Ubuntu Repository** for the steps executed and changes done to make it run.
 
-## Airship understanding and Deployment
+
+## 3. Cluster creation without using the Kubeadm Binaries
+
+### 3.1 Pre-Requisite
+
+1.	2 Ubuntu 16.04 virtual machines, with 2 GB RAM, 2 vCPUs and 10 GB storage
+2.	Host Network configured with SSH daemon running
+3.	Packages like curl are installed on the machine.
+
+NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository.
+
+### 3.2 Steps Performed
+
+Choose one node to be a Master and login to the same. 
+
+1.	Switch to the root user.
+
+	```
+	$ sudo su -
+	```
+2.	Swap was turned off
+	```
+	$ swapoff -a
+	```
+3.	Install the docker.io package using the following command.
+	```
+	$ apt-get install docker.io
+	```
+4.	All the dependent packages were installed
+	```
+	$ apt-get install iproute2 socat util-linux mount ebtables ethtool conntrack
+	```
+5.	Create a folder for the storing the binaries
+	```
+	$ mkdir kube_binaries
+
+	$ cd kube_binaries
+	```
+6.	Download the required binaries and install them
+	```
+	$ curl -LO https://packages.cloud.google.com/apt/pool/kubernetes-cni_0.7.5-00_amd64_b38a324bb34f923d353203adf0e048f3b911f49fa32f1d82051a71ecfe2cd184.deb
+	
+	$ dpkg -i kubernetes-cni_0.7.5-00_amd64_b38a324bb34f923d353203adf0e048f3b911f49fa32f1d82051a71ecfe2cd184.deb
+
+	$ curl -LO https://packages.cloud.google.com/apt/pool/kubelet_1.18.2-00_amd64_1fb09333a48950c243d165ba9b4989a99ad8130d135d8b18e72bcb151359d6fe.deb
+	
+	$ dpkg -i kubelet_1.18.2-00_amd64_1fb09333a48950c243d165ba9b4989a99ad8130d135d8b18e72bcb151359d6fe.deb
+
+	$ curl -LO https://packages.cloud.google.com/apt/pool/kubectl_1.18.2-00_amd64_89df64c5d736fa79e5a9754d94541b02c29f52d6d5720dbb3d58e22406a969f5.deb
+	
+	$ dpkg -i kubectl_1.18.2-00_amd64_89df64c5d736fa79e5a9754d94541b02c29f52d6d5720dbb3d58e22406a969f5.deb
+
+	$ curl -LO https://packages.cloud.google.com/apt/pool/cri-tools_1.13.0-00_amd64_6930e446a683884314deef354fbd8a7c5fc2be5c69c58903ad83b69b42529da4.deb
+	
+	$ dpkg -i cri-tools_1.13.0-00_amd64_6930e446a683884314deef354fbd8a7c5fc2be5c69c58903ad83b69b42529da4.deb
+
+	$ curl -LO https://packages.cloud.google.com/apt/pool/kubeadm_1.18.2-00_amd64_bcaf195a62edb4ecb8040035e57a7dab692c962471eb47afa527ae14d8af5ecf.deb
+	
+	$ dpkg -i kubeadm_1.18.2-00_amd64_bcaf195a62edb4ecb8040035e57a7dab692c962471eb47afa527ae14d8af5ecf.deb
+	```
+7.	Initialize the cluster
+	```
+	$ kubeadm init --apiserver-advertise-address=<advertised_ip_address> --pod-network-cidr=10.97.0.0/16
+	```
+8.	Perform the steps mentioned at the end of the kubeadm init execution
+	```
+	$ mkdir -p $HOME/.kube
+
+	$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+	$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+	```
+9.	Deploy the Calico Pod Network
+	```
+	$ kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
+	```
+On the Second Node: - 
+
+10.	Repeat 1-6 steps mentioned above.
+
+11.	Use the Join token provided at the end of the kubeadm init command on the master node to join the cluster.
+	```
+	$ kubeadm join <advertised_ip_address>:6443 --token wp66b3.98dp7tyxc7ywlkzn \
+    	--discovery-token-ca-cert-hash sha256:2102b2d2eef22404904f24430a816e48d064a705ae1ab997d66038144a13865a
+	```
+On the Master node
+
+12.	Execute the following command to observe if the nodes have joined the cluster and are in Ready state.
+	```
+	$ kubectl get nodes
+	```
+
+## 4. Local Ubuntu Repository Creation
+
+### 4.1 Pre-Requisite
+
+1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
+2.	Host Network configured with SSH daemon running
+3.	Packages like curl are installed on the machine.
+4.	Access to the machine and captured logs where “Airship in a Bottle” Deployment using the TreasureMap was executed.
+
+### 4.2 Steps Performed
+
+1.	Switch to the root user.
+	```
+	$ sudo su –
+	```
+2.	Create a folder for storing all the packages required for the deployment of the “Airship in a Bottle” 
+	```
+	$ mkdir -p /usr/local/mydebs
+	```
+3.	Copy all the packages used for the “Airship in a Bottle” deployment in the above-mentioned directory.
+	
+	NOTE: - Most of the packages were already present at the location /var/cache/apt/archives on the machine where “Airship in a Bottler” was first executed using the treasuremap.
+	
+	Following this, captured logs were studied to identify the other dependent packages which are required but not present in the /var/cache/apt/archives location.
+
+4.	Once all the packages were collected in /usr/local/mydebs folder, following commands were executed:
+	```
+	$ cd /usr/local/mydebs
+	
+	$ dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
+	```
+5.	Now sources.list file was updated to contain only the following entry.
+	```
+	$ cat /etc/apt/sources.list
+		
+	deb file:/usr/local/mydebs ./
+	```	
+6.	Once the sources.list is updated, apt-get was also updated. 
+	```	
+	$ apt-get update
+	```
+Post this the packages present in the mydebs can be installed in an offline mode as well.
+
+
+## 5. Docker Registry Creation
+
+### 5.1 Pre-Requisite
+1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage
+2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
+3.	Host Network configured with SSH daemon running
+4.	Packages like curl are installed on the machine.
+
+NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
+
+### 5.2 Steps Performed
+
+Login to the machine with 32 GB Storage option.
+1.	Switch to the root user.
+	```
+	$ sudo su –
+	```
+2.	Install the docker.io package using the following command.
+	```
+	$ apt-get install docker.io
+	```
+3.	Create the self-signed certificates
+	```
+	$ mkdir -p certs
+
+	$ openssl req -newkey rsa:4096 -nodes -sha256 -subj “/CN=myregistrydomain.com” -keyout certs/domain.key -x509 -days 365 -out certs/domain.crt
+	```
+4.	Place the certificate at the following location for the verification
+	```	
+	$ cp certs/domain.crt /etc/docker/certs.d/myregistrydomain.com:443/ca.crt
+	```
+	
+	NOTE: We need to copy the domain.crt on all the Docker nodes from where we need to access this docker registry.
+	
+5.	Start the registry and directing it to the TLS certificate created above.
+	```
+	$ docker run -d \
+  	
+	--restart=always \
+  	
+	--name registry \
+  	
+	-v "$(pwd)"/certs:/certs \
+  	
+	-e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+  	
+	-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+  	
+	-e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
+  	
+	-p 443:443 \
+ 	
+	registry:2 
+	```
+6.	Add an entry in the /etc/hosts file for the myregistrydomain.com to point to the current node.
+	```
+	$ cat /etc/hosts
+	
+	127.0.0.1       localhost
+	
+	127.0.1.1       dockerRegistry
+	
+	<IP address>  myregistrydomain.com
+	```
+
+	NOTE: We need to add an entry for the myregistrydomain.com on all the docker nodes from where we need to access the local registry. And IP address would be for the machine which is hosting the registry.
+
+### 5.3 Insert a Docker image in the local registry
+
+Login to the machine hosting the docker registry
+1.	Login to docker registry created above
+	```
+	$ docker login myregistrydomain.com:443
+	
+	Username: root
+	
+	Password: 
+
+	WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+	Configure a credential helper to remove this warning. See
+	https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+	Login Succeeded
+	```
+2.	Create the entry for ubuntu:16.04 image in the myregistrydomain.com:443 docker repository
+	```
+	$ docker pull ubuntu:16.04
+
+	$ docker tag ubuntu:16.04 myregistrydomain.com:443/my-ubuntu
+
+	$ docker push myregistrydomain.com:443/my-ubuntu
+
+	$ docker image rm myregistrydomain.com:443/my-ubuntu
+	
+	$ docker image rm ubuntu:16.04
+	
+	$ docker pull myregistrydomain.com:443/my-ubuntu
+	```
+### 5.4 Testing of the Registry
+
+Login to the second machine with 10 GB storage
+1.	Switch to the root user.
+	```
+	$ sudo su –
+	```
+2.	Install the docker.io package using the following command.
+	```
+	$ apt-get install docker.io
+	```
+3.	Login to docker
+	```
+	$ docker login myregistrydomain.com:443
+
+	Username: root
+	
+	Password: 
+	
+	WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+	
+	Configure a credential helper to remove this warning. See
+
+	https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+	Login Succeeded
+	```
+4.	Try to pull the ubuntu:16.04 image from the local repository
+	```
+	$ docker pull myregistrydomain.com:443/my-ubuntu
+	```
+
+## 6. Airship understanding and Deployment
 
 This activity was started by referring to the GIT link shared for the treasure map https://github.com/airshipit/treasuremap.
 From this link, the documentation was opened and was used to make the early understanding of the Airship, its components and number of deployment strategies like Seaworthy, Airloop and Airskiff. (Link referred is https://airship-treasuremap.readthedocs.io/en/latest/index.html)
@@ -208,186 +474,6 @@ Challenge faced: -
 
 Solution: - This one still needs to be debugged.
 
-## Cluster creation without using the Kubeadm Binaries
-
-### Pre-Requisite
-
-1.	2 Ubuntu 16.04 virtual machines, with 2 GB RAM, 2 vCPUs and 10 GB storage
-2.	Host Network configured with SSH daemon running
-3.	Packages like curl are installed on the machine.
-
-NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
-
-### Steps Performed
-
-1.	Switch to the root user.
-$ sudo su -
-
-2.	Swap was turned off
-$ swapoff -a
-
-3.	Install the docker.io package using the following command.
-$ apt-get install docker.io
-
-4.	All the dependent packages were installed
-$ apt-get install iproute2 socat util-linux mount ebtables ethtool conntrack
-
-5.	Create a folder for the storing the binaries
-$ mkdir kube_binaries
-$ cd kube_binaries
-
-6.	Download the required binaries and install them
-$ curl -LO https://packages.cloud.google.com/apt/pool/kubernetes-cni_0.7.5-00_amd64_b38a324bb34f923d353203adf0e048f3b911f49fa32f1d82051a71ecfe2cd184.deb
-$ dpkg -i kubernetes-cni_0.7.5-00_amd64_b38a324bb34f923d353203adf0e048f3b911f49fa32f1d82051a71ecfe2cd184.deb
-
-$ curl -LO https://packages.cloud.google.com/apt/pool/kubelet_1.18.2-00_amd64_1fb09333a48950c243d165ba9b4989a99ad8130d135d8b18e72bcb151359d6fe.deb
-$ dpkg -i kubelet_1.18.2-00_amd64_1fb09333a48950c243d165ba9b4989a99ad8130d135d8b18e72bcb151359d6fe.deb
-
-$ curl -LO https://packages.cloud.google.com/apt/pool/kubectl_1.18.2-00_amd64_89df64c5d736fa79e5a9754d94541b02c29f52d6d5720dbb3d58e22406a969f5.deb
-$ dpkg -i kubectl_1.18.2-00_amd64_89df64c5d736fa79e5a9754d94541b02c29f52d6d5720dbb3d58e22406a969f5.deb
-
-$ curl -LO https://packages.cloud.google.com/apt/pool/cri-tools_1.13.0-00_amd64_6930e446a683884314deef354fbd8a7c5fc2be5c69c58903ad83b69b42529da4.deb
-$ dpkg -i cri-tools_1.13.0-00_amd64_6930e446a683884314deef354fbd8a7c5fc2be5c69c58903ad83b69b42529da4.deb
-
-$ curl -LO https://packages.cloud.google.com/apt/pool/kubeadm_1.18.2-00_amd64_bcaf195a62edb4ecb8040035e57a7dab692c962471eb47afa527ae14d8af5ecf.deb
-$ dpkg -i kubeadm_1.18.2-00_amd64_bcaf195a62edb4ecb8040035e57a7dab692c962471eb47afa527ae14d8af5ecf.deb
-7.	Initialize the cluster
-$ kubeadm init --apiserver-advertise-address=<advertised_ip_address> --pod-network-cidr=10.97.0.0/16
-8.	Perform the steps mentioned at the end of above command
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-9.	Deploy the Calico Pod Network
-$ kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
-
-On the Second Node: - 
-10.	Repeat 1-6 steps mentioned above.
-11.	Use the Join token provided at the end of the kubeadm init command on the master node to join the cluster.
-$ kubeadm join <advertised_ip_address>:6443 --token wp66b3.98dp7tyxc7ywlkzn \
-    --discovery-token-ca-cert-hash sha256:2102b2d2eef22404904f24430a816e48d064a705ae1ab997d66038144a13865a
-
-On the Master node
-12.	Execute the following command to observe if the nodes have joined the cluster and are in Ready state.
-$ kubectl get nodes
-
-
-## Docker Registry Creation
-
-### Pre-Requisite
-1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage
-2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
-3.	Host Network configured with SSH daemon running
-4.	Packages like curl are installed on the machine.
-NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
-
-### Steps Performed
-
-Login to the machine with 32 GB Storage option.
-1.	Switch to the root user.
-$ sudo su –
-
-2.	Install the docker.io package using the following command.
-$ apt-get install docker.io
-
-3.	Create the self-signed certificates
-$ mkdir -p certs
-$ openssl req -newkey rsa:4096 -nodes -sha256 -subj “/CN=myregistrydomain.com” -keyout certs/domain.key -x509 -days 365 -out certs/domain.crt
-
-4.	Place the certificate at the following location for the verification
-	$ cp certs/domain.crt /etc/docker/certs.d/myregistrydomain.com:443/ca.crt
-	NOTE: We need to copy the domain.crt on all the Docker nodes from where we need to access this docker registry.
-5.	Start the registry and directing it to the TLS certificate created above.
-	$ docker run -d \
-  --restart=always \
-  --name registry \
-  -v "$(pwd)"/certs:/certs \
-  -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
-  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
-  -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
-  -p 443:443 \
- registry:2 
-6.	Add an entry in the /etc/hosts file for the myregistrydomain.com to point to the current node.
-	$ cat /etc/hosts
-127.0.0.1       localhost
-127.0.1.1       dockerRegistry
-<IP address>  myregistrydomain.com
-NOTE: We need to add an entry for the myregistrydomain.com on all the docker nodes from where we need to access the local registry. And IP address would be for the machine which is hosting the registry.
-
-### Insert a Docker image in the local registry
-
-Login to the machine hosting the docker registry
-1.	Login to docker registry created above
-$ docker login myregistrydomain.com:443
-Username: root
-Password: 
-WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
-Configure a credential helper to remove this warning. See
-https://docs.docker.com/engine/reference/commandline/login/#credentials-store
-
-Login Succeeded
-
-2.	Create the entry for ubuntu:16.04 image in the myregistrydomain.com:443 docker repository
-$ docker pull ubuntu:16.04
-$ docker tag ubuntu:16.04 myregistrydomain.com:443/my-ubuntu
-$ docker push myregistrydomain.com:443/my-ubuntu
-$ docker image rm myregistrydomain.com:443/my-ubuntu
-$ docker image rm ubuntu:16.04
-$ docker pull myregistrydomain.com:443/my-ubuntu
-
-### Testing of the Registry
-
-Login to the second machine with 10 GB storage
-1.	Switch to the root user.
-$ sudo su –
-
-2.	Install the docker.io package using the following command.
-$ apt-get install docker.io
-
-3.	Login to docker
-$ docker login myregistrydomain.com:443
-Username: root
-Password: 
-WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
-Configure a credential helper to remove this warning. See
-https://docs.docker.com/engine/reference/commandline/login/#credentials-store
-
-Login Succeeded
-
-4.	Try to pull the ubuntu:16.04 image from the local repository
-$ docker pull myregistrydomain.com:443/my-ubuntu
-
-## Local Ubuntu Repository Creation
-
-### Pre-Requisite
-
-1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
-2.	Host Network configured with SSH daemon running
-3.	Packages like curl are installed on the machine.
-4.	Access to the machine and captured logs where “Airship in a Bottle” Deployment using the TreasureMap was executed.
-
-### Steps Performed
-
-1.	Switch to the root user.
-$ sudo su –
-
-2.	Create a folder for storing all the packages required for the deployment of the “Airship in a Bottle” 
-$ mkdir -p /usr/local/mydebs
-
-3.	Copy all the packages used for the “Airship in a Bottle” deployment in the above-mentioned directory.
-NOTE: - Most of the packages were already present at the location /var/cache/apt/archives on the machine where “Airship in a Bottler” was first executed using the treasuremap.
-Following this, captured logs were studied to identify packages which are required but not present in the /var/cache/apt/archives location.
-
-4.	Once all the packages were collected following commands were executed:
-$ cd /usr/local/mydebs
-$ dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
-
-5.	Now sources.list file was updated to contain only the following entry.
-	$ cat /etc/apt/sources.list
-deb file:/usr/local/mydebs ./
-6.	Once the sources.list is updated, apt-get was also updated. 
-	$ apt-get update
-With this the packages present in the mydebs can be installed in the offline mode as well.
 
 ## Airship in a Bottle using local docker registry and Ubuntu Repository
 
