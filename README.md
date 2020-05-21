@@ -595,72 +595,110 @@ This one is the same as Approach 2, with the following differences
 ### 7.1 Pre-Requisite
 
 1.	1 Ubuntu 16.04 virtual machine, with 4 GB RAM, 9 vCPUs and 32 GB storage for Airship deployment.
-2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage with a working local docker registry. (It was created using the steps mentioned in Docker Registry Creation section.
+
+2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage with a working local docker registry. (It was created using the steps mentioned in **Docker Registry Creation section**.)
+
 3.	Host Network configured with SSH daemon running
+
 4.	Packages like curl are installed on the machine.
-5.	Local Ubuntu Repository folder. As created in the section Local Ubuntu Repository Creation.
+
+5.	Local Ubuntu Repository folder. As created in the section **Local Ubuntu Repository Creation**.
 
 ### 7.2 Steps Performed
 
 1.	Switch to the root user.
-$ sudo su –
-
+	```
+	$ sudo su –
+	```
 2.	Place the mydebs directory (which was created as per Pre-Requisite #5) at the location /usr/local/mydebs.
 
 3.	Update the sources.list file was updated to contain only the following entry.
+	```
 	$ cat /etc/apt/sources.list
-deb file:/usr/local/mydebs ./
-4.	Once the sources.list is updated, apt-get was also updated. 
-$ apt-get update
 
+	deb file:/usr/local/mydebs ./
+	```
+4.	Once the sources.list is updated, apt-get was also updated. 
+	```
+	$ apt-get update
+	```
 5.	Install the docker.io package using the following command.
-$ apt-get install docker.io
-NOTE: - This package will be installed using the /usr/local/mydebs location.
+	```
+	$ apt-get install docker.io
+	```	
+
+	NOTE: - This package will be installed using the /usr/local/mydebs location.
 
 7.	Add an entry in the /etc/hosts file for the myregistrydomain.com to point to the node hosting the docker registry.
+	```
 	$ cat /etc/hosts
-127.0.0.1       localhost
-127.0.1.1       dockerRegistry
-<IP address>  myregistrydomain.com
 
+	127.0.0.1       localhost
+	
+	127.0.1.1       dockerRegistry
+
+	<IP address>  myregistrydomain.com
+	```
 6.	Fetch the ca.crt file from the location /etc/docker/certs.d/myregistrydomain.com:443/ on the node hosting the docker registry and store at the location /etc/docker/certs.d/myregistrydomain.com:443/ 
+	```
 	$ cp ca.crt /etc/docker/certs.d/myregistrydomain.com:443/ca.crt
-
+	```
 7.	Login to docker
-$ docker login myregistrydomain.com:443
-Username: root
-Password: 
-WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
-Configure a credential helper to remove this warning. See
-https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+	```
+	$ docker login myregistrydomain.com:443
+	
+	Username: root
 
-Login Succeeded
+	Password: 
 
+	WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+
+	Configure a credential helper to remove this warning. See
+
+	https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+
+	Login Succeeded
+	```
 8.	Fetch the Treasuremap from the GIT
-$ mkdir -p /root/deploy
-$ cd /root/deploy
-$ git clone https://github.com/airshipit/treasuremap.git
+	```
 
+	$ mkdir -p /root/deploy
+
+	$ cd /root/deploy
+
+	$ git clone https://github.com/airshipit/treasuremap.git
+	```
 9.	Change the working directory
-$ cd treasuremap/tools/deployment/aiab/
-
+	```
+	$ cd treasuremap/tools/deployment/aiab/
+	```
 10.	Execute airship-in-a-bottle.sh
-$ ./airship-in-a-bottle.sh 
+	```
+	$ ./airship-in-a-bottle.sh 
+	```
 
-Challenges faced: -
-1.	The packages were not getting installed using the local ubuntu repository since the packages needed authentication.
-Solution: - For this, following files were modified to include the flag “--allow-unauthenticated” wherever apt command was invoked for installing the packages.
-a.	tools/deployment/aiab/common/deploy-airship.sh
-b.	tools/airship
+**Challenges faced:** -
 
-The apt-get install command for docker-ce and socat is also invoked from the genesis.sh. Was unable to locate the location from where the command was being created and written in genesis.sh, so applied a hack in the “deploy-airship.sh” to sleep for 100 seconds and in the mean time manually added the flag.
+	1.	The packages were not getting installed using the local ubuntu repository since the packages needed authentication.
 
-2.	The control landed in a waiting state to get API response with the cluster. 
-Solution: - It was observed that no docker container was deployed and kubelet was also active. Also, the static pod manifests were also placed at location /etc/kubernetes/manifests.
-On further debugging it was observed that /etc/hosts file get updated by promenade, hence the entry for the myregistydomain.com (out local docker registry) was removed. 
-On adding the entry, it proceeded further with the deployment.
+	**Solution**: - For this, following files were modified to include the flag “--allow-unauthenticated” wherever apt command was invoked for installing the packages.
+	
+	a.	tools/deployment/aiab/common/deploy-airship.sh
 
-Following are some screen shots captured while using the local ubuntu repository and docker registry.
+	b.	tools/airship
+
+	The apt-get install command for docker-ce and socat is also invoked from the genesis.sh. Was unable to locate the location from where the command was being created and written in genesis.sh, so applied a hack in the “deploy-airship.sh” to sleep for 100 seconds and in the mean time manually added the flag.
+
+	2.	The control landed in a waiting state to get API response with the cluster. 
+
+	**Solution**: - It was observed that no docker container was deployed and kubelet was also active. Also, the static pod manifests were also placed at location /etc/kubernetes/manifests.
+	
+	On further debugging it was observed that /etc/hosts file get updated by promenade, hence the entry for the myregistydomain.com (out local docker registry) was removed. 
+
+	On adding the entry, it proceeded further with the deployment.
+
+**Following are some screen shots captured while using the local ubuntu repository and docker registry.**
  
 ![Local Ubuntu Repository being used to install the package](./Diagrams/Ubuntu_Repository_Usage.png)
 
