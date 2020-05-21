@@ -1,8 +1,6 @@
 # Airship in a Bottle
-===================
 
 ## Problem Statement
------------------
 
 The activity was to be able to deploy “Airship in a Bottle” with following of the tasks to be completed while performing the activity: -
 1. Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
@@ -15,7 +13,6 @@ Following link was provided: -
 https://github.com/airshipit/treasuremap
 
 ## Activities
-----------
 
 For this the first activity I undertook had planned to perform the tasks independently first and once completed, to combine them as a complete solution.
 The initial focus was to understand what Airship is and try to be familiar with the Treasure Map link provided. Main approach was to be able to deploy “Airship in a Bottle” using the kubeadm and have a step ready. After that combine it to use the local docker registry and local ubuntu repository. 
@@ -27,7 +24,6 @@ A local Ubuntu repository was also created comprising of all the packages requir
 It was later also tried to deploy the “Airship in a Bottle” using the method defined in the treasuremap, with access to the local docker registry and Local Ubuntu Repository. Refer to section Airship in a Bottle using local docker registry and Ubuntu Repository for the steps executed and changes done to make it run.
 
 ## Airship understanding and Deployment
-------------------------------------
 
 This activity was started by referring to the GIT link shared for the treasure map https://github.com/airshipit/treasuremap.
 From this link, the documentation was opened and was used to make the early understanding of the Airship, its components and number of deployment strategies like Seaworthy, Airloop and Airskiff. (Link referred is https://airship-treasuremap.readthedocs.io/en/latest/index.html)
@@ -35,7 +31,7 @@ During the documentation only came across the link referring to the document for
 Based on the “aiab” link and information gathered through the documentation tried to deploy the Airship in a Bottle using the details present in the TreasureMap.
 
 ### “Airship in a Bottle” Deployment using the TreasureMap
--------------------------------------------------------
+
 NOTE: - In this task Local Ubuntu repository or the Docker Registry was not used.
 
 First Iteration: -
@@ -57,7 +53,6 @@ NOTE: - This is the maximum RAM I could provide due to limited resources.
 NOTE: - Post the second iteration, since the execution went ahead and deployed multiple charts, backup of the generated files was taken, so that it can referred or used later.
 
 ### Code and captured logs Understanding
-------------------------------------
 
 Next, I tried to understand airship-in-a-bottle.sh to understand what exactly was happening under the hood.
 Following is my understanding: -
@@ -74,7 +69,7 @@ Following is my understanding: -
 		iv.	Start the kubelet and let armada deploy the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
 
 ### Treasuremap Folder Structuring
-------------------------------
+
 A high-level folder structure (not covering all the files) was created so that it is easy to track the files as moved forward. (It was mostly focused from the point of Airship in a Bottle)
 For this PEGLEG documentation was also read to get more clarity: -
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
@@ -83,7 +78,7 @@ This is not extensive but gives a high-level view.
 :: ./Diagrams/Folder_structure.png
  
 ### Solution Approach 1
--------------------
+
 For this I did the following tasks: -
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
 2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
@@ -110,7 +105,6 @@ This API server was running on port 6444 and was pointing to the wrong ETCD endp
 Solution: - This approach was left as it was still using PROMENADE and due to mid-run of the existing tools, there was a chance that system may get corrupted.
 
 ### Further understanding building
-------------------------------
 
 Just to understand more on how PROMENADE and ARMADA works, searched for their operational documents and read through it to get more information about them.
 Following links were read for this purpose
@@ -123,7 +117,7 @@ https://youtu.be/ckcLnBqGQrQ
 
 
 ### Solution Approach 2
--------------------
+
 In this one, I removed the usage of “airship-in-a-bottle.sh” and PROMENADE. I tried to deploy the cluster (with HELM2) and then deploy the bootstrap armada using the old manifests (saved using the initial days for reference).
 
 Following steps were performed: -
@@ -173,7 +167,7 @@ Solution: -
 Could not fix this. Thought that may be because of the older chart groups skipped. So, went to approach 3.
 
 ### Solution Approach 3
--------------------
+
 This one is the same as Approach 2, with the following differences 
 1.	Chart group “cluster-bootstrap-aiab” has not been modified.
 2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
@@ -194,10 +188,9 @@ Challenge faced: -
 Solution: - This one still needs to be debugged.
 
 ## Cluster creation without using the Kubeadm Binaries
----------------------------------------------------
 
 ### Pre-Requisite
------------------
+
 1.	2 Ubuntu 16.04 virtual machines, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
@@ -205,6 +198,7 @@ Solution: - This one still needs to be debugged.
 NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
 
 ### Steps Performed
+
 1.	Switch to the root user.
 $ sudo su -
 
@@ -258,7 +252,6 @@ $ kubectl get nodes
 
 
 ## Docker Registry Creation
-------------------------
 
 ### Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage
@@ -268,7 +261,8 @@ $ kubectl get nodes
 NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
 
 ### Steps Performed
-	Login to the machine with 32 GB Storage option.
+
+Login to the machine with 32 GB Storage option.
 1.	Switch to the root user.
 $ sudo su –
 
@@ -321,6 +315,7 @@ $ docker image rm ubuntu:16.04
 $ docker pull myregistrydomain.com:443/my-ubuntu
 
 ### Testing of the Registry
+
 Login to the second machine with 10 GB storage
 1.	Switch to the root user.
 $ sudo su –
@@ -342,15 +337,16 @@ Login Succeeded
 $ docker pull myregistrydomain.com:443/my-ubuntu
 
 ## Local Ubuntu Repository Creation
---------------------------------
 
 ### Pre-Requisite
+
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
 4.	Access to the machine and captured logs where “Airship in a Bottle” Deployment using the TreasureMap was executed.
 
 ### Steps Performed
+
 1.	Switch to the root user.
 $ sudo su –
 
@@ -373,9 +369,9 @@ deb file:/usr/local/mydebs ./
 With this the packages present in the mydebs can be installed in the offline mode as well.
 
 ## Airship in a Bottle using local docker registry and Ubuntu Repository
----------------------------------------------------------------------
 
 ### Pre-Requisite
+
 1.	1 Ubuntu 16.04 virtual machine, with 4 GB RAM, 9 vCPUs and 32 GB storage for Airship deployment.
 2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage with a working local docker registry. (It was created using the steps mentioned in Docker Registry Creation section.
 3.	Host Network configured with SSH daemon running
@@ -383,6 +379,7 @@ With this the packages present in the mydebs can be installed in the offline mod
 5.	Local Ubuntu Repository folder. As created in the section Local Ubuntu Repository Creation.
 
 ### Steps Performed
+
 1.	Switch to the root user.
 $ sudo su –
 
