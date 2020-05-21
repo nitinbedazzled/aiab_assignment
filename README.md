@@ -10,6 +10,7 @@ The activity was to be able to deploy “Airship in a Bottle” with following o
 5. Write the script to automate whole process in any language (Golang is preferred though). Try to make the deployment as automated as possible.
 
 Following link was provided: -
+
 https://github.com/airshipit/treasuremap
 
 ## Activities
@@ -27,7 +28,9 @@ It was later also tried to deploy the “Airship in a Bottle” using the method
 
 This activity was started by referring to the GIT link shared for the treasure map https://github.com/airshipit/treasuremap.
 From this link, the documentation was opened and was used to make the early understanding of the Airship, its components and number of deployment strategies like Seaworthy, Airloop and Airskiff. (Link referred is https://airship-treasuremap.readthedocs.io/en/latest/index.html)
+
 During the documentation only came across the link referring to the document for the Airship in a Bottle (https://github.com/airshipit/treasuremap/blob/master/tools/deployment/aiab/README.rst).
+
 Based on the “aiab” link and information gathered through the documentation tried to deploy the Airship in a Bottle using the details present in the TreasureMap.
 
 ### “Airship in a Bottle” Deployment using the TreasureMap
@@ -72,7 +75,9 @@ Following is my understanding: -
 
 A high-level folder structure (not covering all the files) was created so that it is easy to track the files as moved forward. (It was mostly focused from the point of Airship in a Bottle)
 For this PEGLEG documentation was also read to get more clarity: -
+
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
+
 This is not extensive but gives a high-level view.
 
 ![Folder Structure](./Diagrams/Folder_structure.png)
@@ -440,7 +445,9 @@ On adding the entry, it proceeded further with the deployment.
 
 Following are some screen shots captured while using the local ubuntu repository and docker registry.
  
+![Local Ubuntu Repository being used to install the package](./Diagrams/Ubuntu_Repository_Usage.png)
 
+![Local Docker Registry is used to fetch the image](./Diagrams/Docker_Registry_Usage.png)
  
 
  
