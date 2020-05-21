@@ -1,31 +1,41 @@
 # Airship in a Bottle
 
-## Problem Statement
+## 1. Problem Statement
 
 The activity was to be able to deploy “Airship in a Bottle” with following tasks to be completed while performing the activity: -
-1. Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
-2. Setup a local ubuntu repo to install other packages if required. Don't directly install packages from ubuntu mirrors or any other public repos.
-3. Don’t use any docker images from public repos (e.g.: quay.io, dockerhub.com, gcr.io etc.). Setup a local docker images registry for docker images. 
-4. Modify airship manifest(s) to use the docker images and other packages from local repos and registries.  
-5. Write the script to automate whole process in any language (Golang is preferred though). Try to make the deployment as automated as possible.
+
+Task 1. Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
+
+Task 2. Setup a local ubuntu repo to install other packages if required. Don't directly install packages from ubuntu mirrors or any other public repos.
+
+Task 3. Don’t use any docker images from public repos (e.g.: quay.io, dockerhub.com, gcr.io etc.). Setup a local docker images registry for docker images. 
+
+Task 4. Modify airship manifest(s) to use the docker images and other packages from local repos and registries.  
+
+Task 5. Write the script to automate whole process in any language (Golang is preferred though). Try to make the deployment as automated as possible.
 
 Following link was provided: -
 
 https://github.com/airshipit/treasuremap
 
-## Activities
+## 2. Activities
 
-For this the planning was to perform the tasks independently first and once completed, to combine them as a complete solution. The critical area of this planning was to understand and then to be able to deploy the Airship in a bottle using the kubeadm.
+To accomplish this, plan was to perform the above-mentioned tasks independently and once all the tasks are completed, to combine them together to get the complete solution. 
 
-Following are the tasks which were performed to accomplish the solution.
+The critical area of this planning was to understand and then to be able to deploy the Airship in a bottle using the kubeadm.
 
-1.	The initial focus was to understand what Airship is and try to be familiar with the Treasure Map link provided. Main focus of this activity was to be able to deploy “Airship in a Bottle” using the kubeadm and define the procedure for it. After that combine it to use the local docker registry and local ubuntu repository. 
-Various approaches undertaken to understand and deploy “Airship in a bottle” are covered under section Airship understanding and Deployment.
-2.	A separate Cluster was also created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section Cluster creation without using the Kubeadm Binaries for more details on the steps performed.
-3.	Local Docker Registry was created on a separate machine and was used to refer for the docker images. Steps for creating the Docker Registry are captured under the section Docker Registry Creation.
-4.	Local Ubuntu repository was also created comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section Local Ubuntu Repository Creation for more details about the steps performed.
-5.	Deployed the “Airship in a Bottle” using the method defined in the treasuremap, with access to the local docker registry and Local Ubuntu Repository. Refer to section Airship in a Bottle using local docker registry and Ubuntu Repository for the steps executed and changes done to make it run.
+Following tasks were performed to accomplish the solution.
 
+Task 1. A separate Cluster was created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section **Cluster creation without using the kubeadm binaries** for more details on the steps performed for achieving this task.
+
+Task 2. Local ubuntu repository was also comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section **Local Ubuntu Repository Creation** for more details about the steps performed.
+
+Task 3. Local Docker Registry was created on a separate machine comprising of all the required images. Steps for creating the Docker Registry are captured under the section **Docker Registry Creation**.
+
+Task 4a. The focus area of the task was to understand what Airship is and try to be familiar with the Treasure Map link provided. Based on the understanding multiple approaches were tried to deploy “Airship in a Bottle” using the kubeadm. 
+Various approaches undertaken to understand and deploy “Airship in a bottle” are covered under section **Airship understanding and Deployment**.
+
+Task 4b. Deployed the “Airship in a Bottle” using the method defined in the treasuremap. This Airship accessed the local Docker Registry and local Ubuntu Repository for the iamges and the binaries. Refer section **Airship in a Bottle using local docker registry and Ubuntu Repository** for the steps executed and changes done to make it run.
 
 ## Airship understanding and Deployment
 
