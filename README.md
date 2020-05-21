@@ -46,7 +46,7 @@ Various approaches undertaken to understand and deploy “Airship in a bottle”
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
 
-NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository.
+NOTE: - This task was tested as a stand-alone task hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository.
 
 ### 3.2 Steps Performed
 
@@ -136,7 +136,7 @@ On the Master node
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
-4.	Access to the machine and captured logs where “Airship in a Bottle” Deployment using the TreasureMap was executed.
+4.	Access to the machine and captured logs where section **“Airship in a Bottle” Deployment using the TreasureMap** was executed.
 
 ### 4.2 Steps Performed
 
@@ -181,7 +181,7 @@ Post this the packages present in the mydebs can be installed in an offline mode
 3.	Host Network configured with SSH daemon running
 4.	Packages like curl are installed on the machine.
 
-NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
+NOTE: - This task was tested as a stand-alone task hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository.
 
 ### 5.2 Steps Performed
 
@@ -306,56 +306,87 @@ Login to the second machine with 10 GB storage
 ## 6. Airship understanding and Deployment
 
 This activity was started by referring to the GIT link shared for the treasure map https://github.com/airshipit/treasuremap.
-From this link, the documentation was opened and was used to make the early understanding of the Airship, its components and number of deployment strategies like Seaworthy, Airloop and Airskiff. (Link referred is https://airship-treasuremap.readthedocs.io/en/latest/index.html)
 
-During the documentation only came across the link referring to the document for the Airship in a Bottle (https://github.com/airshipit/treasuremap/blob/master/tools/deployment/aiab/README.rst).
+Using the shared link, the documentation was accessed and was used to make the early understanding of the Airship, its components and number of deployment strategies like Seaworthy, Airloop and Airskiff. 
 
-Based on the “aiab” link and information gathered through the documentation tried to deploy the Airship in a Bottle using the details present in the TreasureMap.
+(Link referred is https://airship-treasuremap.readthedocs.io/en/latest/index.html)
 
-### “Airship in a Bottle” Deployment using the TreasureMap
+During the documentation study came across the link referring to the document for the Airship in a Bottle deployment. (https://github.com/airshipit/treasuremap/blob/master/tools/deployment/aiab/README.rst).
 
-NOTE: - In this task Local Ubuntu repository or the Docker Registry was not used.
+Based on the “aiab” deployment understanding and the information gathered through the documentation tried to deploy the Airship in a Bottle using the scripts present in the TreasureMap.
 
-First Iteration: -
+
+### 6.1 “Airship in a Bottle” Deployment using the TreasureMap
+
+NOTE: - In this task Local ubuntu repository or the docker registry was not used.
+
+**First Iteration:** 
+
 1.	A VM was created with Ubuntu 16.04, having 2 vCPUs, 4 GB RAM, 30 GB storage. 
-NOTE: - I had read the minimum specification mentioned but due to limited resources on the laptop, and other activities being done in parallel, I could only spare 4 GB RAM and 2 vCPUs. As main idea was to see how it works.
-2.	Script airship-in-a-bottle.sh was modified to by-pass the configuration related checks.
-3.	Using the root user, executed the script “./airship-in-a-bottle.sh” located at /root/deploy/treasuremap/tools/deployment/aiab/
-4.	It was observed the script started well but during the deployment of the chart ingress-kube-system it got stuck.
 
-Second Iteration: -
+	NOTE: - I had read the minimum specification mentioned but due to limited resources on the laptop, and other activities being done in parallel, I could only spare 4 GB RAM and 2 vCPUs. The main idea was to see how it works.
+
+2.	Script airship-in-a-bottle.sh was modified to by-pass the system configuration related checks.
+
+3.	Using the root user, executed the script “./airship-in-a-bottle.sh” located at /root/deploy/treasuremap/tools/deployment/aiab/
+
+4.	It was observed that the script started well but during the deployment of the chart ingress-kube-system it got stuck.
+
+**Second Iteration:**
+
 1.	A VM was created with Ubuntu 16.04, having 4 vCPUs, 9 GB RAM, 30 GB storage. 
+
 NOTE: - This is the maximum RAM I could provide due to limited resources.
-2.	Script airship-in-a-bottle.sh was modified to by-pass the configuration related checks.
+
+2.	Script airship-in-a-bottle.sh was modified to by-pass the system configuration related checks.
+
 3.	Using the root user, executed the script “./airship-in-a-bottle.sh” located at /root/deploy/treasuremap/tools/deployment/aiab/
-4.	It was observed the script started well but during the deployment of the ChartGroup: ucp-deckhand it got error.
+
+4.	It was observed that the script started well but during the deployment of the ChartGroup: ucp-deckhand it got error.
+
 5.	The logs captured were studied and it was identified that mariadb-ingress POD was restarting which caused the time-out issues.
-6.	Since one of the reasons could be the resources as RAM (as I was off the minimum requirement) was low so did not analyze further.
 
-NOTE: - Post the second iteration, since the execution went ahead and deployed multiple charts, backup of the generated files was taken, so that it can referred or used later.
+6.	Since one of the reasons could have been the resources as RAM (as I was off the minimum requirement) was low so did not analyze further.
 
-### Code and captured logs Understanding
+	NOTE: - Post the second iteration, since the execution went ahead and deployed multiple charts, backup of the generated files was taken, so that it can referred or used later.
+
+### 6.2 Code and captured logs Understanding
 
 Next, I tried to understand airship-in-a-bottle.sh to understand what exactly was happening under the hood.
-Following is my understanding: -
+
+Following is the understanding: -
+
 1.	“airship-in-a-bottle.sh” checked for the minimum configuration and picked up the information like hostname, interface, IP address etc and invoked the second script “deploy-airship.sh”
+
 2.	“deploy-airship.sh” did the following: -
+
 	a.	It installed the docker.io, related dependencies and configure the docker.
+
 	b.	PEGLEG was invoked to aggregate all the artifacts into a single file which could later be used to deploy the airship in a bottle. It resulted in a “treasuremap.yaml” inside the folder collected.
+	
 	c.	PROMENADE is used to first create all the required certificates and store them under the folder genesis in the file name “certificates.yaml”.
-	d.	PROMENADE is now used to generate the genesis.sh which in tern will use the created “certificates.yaml” and “treasuremap.yaml”
+	
+	d.	PROMENADE is now used to generate the genesis.sh which in turn will use the created “certificates.yaml” and “treasuremap.yaml”
+	
 	e.	Post the generation of genesis.sh, it is executed which will: -
+		
 		i.	Place the segregated certificates, charts to be used.
+		
 		ii.	Place the static pod yaml files to start the control node pods
-		iii.	These static pods also include the pods to deploy armada bootstrapping and auxiliary ETCD. 
+		
+		iii.	The placed static pod yamls also include the definitions to deploy bootstrap armada and auxiliary ETCD. 
+		
 		iv.	Start the kubelet. 
+		
 		v.	Bootstrap armada deploys the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
-NOTE: Bootstrap Armada, is responsible for the deployment of the kubernetes control plane pods, networking, UCP components like promenade, armada, barbican, deckhand etc.
+
+			NOTE: Bootstrap armada, is responsible for the deployment of the kubernetes control plane pods, networking, UCP components like promenade, armada, barbican, deckhand etc.
 
 
-### Treasuremap Folder Structuring
+### 6.3 Treasuremap Folder Structuring
 
-A high-level folder structure (not covering all the files) was created so that it is easy to track the files as moved forward. (It was mostly focused from the point of Airship in a Bottle)
+A high-level folder structure (not covering all the files) was created so that it is easy to track the files moving forward. (It was mostly focused from the point of Airship in a Bottle)
+
 For this PEGLEG documentation was also read to get more clarity: -
 
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
@@ -364,7 +395,7 @@ This is not extensive but gives a high-level view.
 
 ![Folder Structure](./Diagrams/Folder_structure.png)
  
-### Solution Approach 1
+### 6.4 Solution Approach 1
 
 For this I did the following tasks: -
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
