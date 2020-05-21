@@ -1,17 +1,22 @@
-# airship_in_a_bottle
- Assignment
- 
- Airship in a Bottle
+Airship in a Bottle
+===================
+
 Problem Statement
+-----------------
+
 The activity was to be able to deploy “Airship in a Bottle” with following of the tasks to be completed while performing the activity: -
 1. Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
 2. Setup a local ubuntu repo to install other packages if required. Don't directly install packages from ubuntu mirrors or any other public repos.
 3. Don’t use any docker images from public repos (e.g.: quay.io, dockerhub.com, gcr.io etc.). Setup a local docker images registry for docker images. 
 4. Modify airship manifest(s) to use the docker images and other packages from local repos and registries.  
 5. Write the script to automate whole process in any language (Golang is preferred though). Try to make the deployment as automated as possible.
+
 Following link was provided: -
 https://github.com/airshipit/treasuremap
+
 Activities
+----------
+
 For this the first activity I undertook had planned to perform the tasks independently first and once completed, to combine them as a complete solution.
 The initial focus was to understand what Airship is and try to be familiar with the Treasure Map link provided. Main approach was to be able to deploy “Airship in a Bottle” using the kubeadm and have a step ready. After that combine it to use the local docker registry and local ubuntu repository. 
 Approaches done to get understand and deploy “Airship in a bottle” are covered under section Airship understanding and Deployment.
@@ -20,20 +25,26 @@ A local Docker Registry was also created on a separate machine and was used to r
 A local Ubuntu repository was also created comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section Local Ubuntu Repository Creation for more details about the steps performed.
 
 It was later also tried to deploy the “Airship in a Bottle” using the method defined in the treasuremap, with access to the local docker registry and Local Ubuntu Repository. Refer to section Airship in a Bottle using local docker registry and Ubuntu Repository for the steps executed and changes done to make it run.
+
 Airship understanding and Deployment
+------------------------------------
 
 This activity was started by referring to the GIT link shared for the treasure map https://github.com/airshipit/treasuremap.
 From this link, the documentation was opened and was used to make the early understanding of the Airship, its components and number of deployment strategies like Seaworthy, Airloop and Airskiff. (Link referred is https://airship-treasuremap.readthedocs.io/en/latest/index.html)
 During the documentation only came across the link referring to the document for the Airship in a Bottle (https://github.com/airshipit/treasuremap/blob/master/tools/deployment/aiab/README.rst).
 Based on the “aiab” link and information gathered through the documentation tried to deploy the Airship in a Bottle using the details present in the TreasureMap.
+
 “Airship in a Bottle” Deployment using the TreasureMap
+-------------------------------------------------------
 NOTE: - In this task Local Ubuntu repository or the Docker Registry was not used.
+
 First Iteration: -
 1.	A VM was created with Ubuntu 16.04, having 2 vCPUs, 4 GB RAM, 30 GB storage. 
 NOTE: - I had read the minimum specification mentioned but due to limited resources on the laptop, and other activities being done in parallel, I could only spare 4 GB RAM and 2 vCPUs. As main idea was to see how it works.
 2.	Script airship-in-a-bottle.sh was modified to by-pass the configuration related checks.
 3.	Using the root user, executed the script “./airship-in-a-bottle.sh” located at /root/deploy/treasuremap/tools/deployment/aiab/
 4.	It was observed the script started well but during the deployment of the chart ingress-kube-system it got stuck.
+
 Second Iteration: -
 1.	A VM was created with Ubuntu 16.04, having 4 vCPUs, 9 GB RAM, 30 GB storage. 
 NOTE: - This is the maximum RAM I could provide due to limited resources.
@@ -42,55 +53,78 @@ NOTE: - This is the maximum RAM I could provide due to limited resources.
 4.	It was observed the script started well but during the deployment of the ChartGroup: ucp-deckhand it got error.
 5.	The logs captured were studied and it was identified that mariadb-ingress POD was restarting which caused the time-out issues.
 6.	Since one of the reasons could be the resources as RAM (as I was off the minimum requirement) was low so did not analyze further.
+
 NOTE: - Post the second iteration, since the execution went ahead and deployed multiple charts, backup of the generated files was taken, so that it can referred or used later.
+
 Code and captured logs Understanding
+------------------------------------
+
 Next, I tried to understand airship-in-a-bottle.sh to understand what exactly was happening under the hood.
 Following is my understanding: -
 1.	“airship-in-a-bottle.sh” checked for the minimum configuration and picked up the information like hostname, interface, IP address etc and invoked the second script “deploy-airship.sh”
 2.	“deploy-airship.sh” did the following: -
-a.	It installed the docker.io, related dependencies and configure the docker.
-b.	PEGLEG was invoked to aggregate all the artifacts into a single file which could later be used to deploy the airship in a bottle. It resulted in a “treasuremap.yaml” inside the folder collected.
-c.	PROMENADE is used to first create all the required certificates and store them under the folder genesis in the file name “certificates.yaml”.
-d.	PROMENADE is now used to generate the genesis.sh which in tern will use the created “certificates.yaml” and “treasuremap.yaml”
-e.	Post the generation of genesis.sh, it is executed which will: -
-i.	Place the segregated certificates, charts to be used.
-ii.	Place the static pod yaml files to start the control node pods
-iii.	These static pods also include the pods to deploy armada bootstrapping and auxiliary ETCD. 
-iv.	Start the kubelet and let armada deploy the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
+	a.	It installed the docker.io, related dependencies and configure the docker.
+	b.	PEGLEG was invoked to aggregate all the artifacts into a single file which could later be used to deploy the airship in a bottle. It resulted in a “treasuremap.yaml” inside the folder collected.
+	c.	PROMENADE is used to first create all the required certificates and store them under the folder genesis in the file name “certificates.yaml”.
+	d.	PROMENADE is now used to generate the genesis.sh which in tern will use the created “certificates.yaml” and “treasuremap.yaml”
+	e.	Post the generation of genesis.sh, it is executed which will: -
+		i.	Place the segregated certificates, charts to be used.
+		ii.	Place the static pod yaml files to start the control node pods
+		iii.	These static pods also include the pods to deploy armada bootstrapping and auxiliary ETCD. 
+		iv.	Start the kubelet and let armada deploy the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
+
 Treasuremap Folder Structuring
+------------------------------
 A high-level folder structure (not covering all the files) was created so that it is easy to track the files as moved forward. (It was mostly focused from the point of Airship in a Bottle)
 For this PEGLEG documentation was also read to get more clarity: -
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
 This is not extensive but gives a high-level view.
  
+ 
 Solution Approach 1
+-------------------
 For this I did the following tasks: -
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
 2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
 3.	Executed “airship-in-a-bottle.sh” till the point genesis.sh is created.
 4.	Executed the genesis.sh till the time all the files are extracted and placed at the desired location, including the manifest.yaml used by the Armada and other public and private keys etc.
+
 Challenges faced during this approach were: - 
+
 1.	At this point, genesis also places the control node manifests like Kubernetes-apiserver, Kubernetes-controller-manage, Kubernetes-scheduler and Kubernetes-etcd also which were created by the Promenade (deployed as Static Pods).
+
 Solution: - Since the files added by the Genesis.sh did not deploy the running pod as the port was already used, hence those manifests were removed.
+
 2.	After fixing the above issue, I observed that the Bootstrap armada pod was not running.
+
 Solution: - I debugged and saw that it had 4 containers: - 
 a.	Tiller
 b.	Armada
 c.	Monitor
 d.	API-Server
 This API server was running on port 6444 and was pointing to the wrong ETCD endpoint as it was looking for the port 12379 and 22379 whereas the etcd deployed by the kubeadm was running on the 2379. Also, certificate issue was also there. Fixed that, now POD was running but still Armada was not deploying anything.
+
 3.	On the Re-Execution of the same approach, I realized the real reason for the problem 2 was that auxiliary ETCD static POD was not deployed. This time I had used the modified version of the Bootstrap Armada with different certificates and few more changes which I had done earlier to have a work-around problem 2, hence there was a TLS handshaking issue.
+
 Solution: - This approach was left as it was still using PROMENADE and due to mid-run of the existing tools, there was a chance that system may get corrupted.
 
 Further understanding building
+------------------------------
+
 Just to understand more on how PROMENADE and ARMADA works, searched for their operational documents and read through it to get more information about them.
 Following links were read for this purpose
 1.	https://airshipit.readthedocs.io/projects/armada/en/latest/readme.html
 2.	https://airshipit.readthedocs.io/projects/promenade/en/latest/index.html
+
 Along with this a You-Tube video (from a 2018 conference) was also referred to increase the further understanding on the airship.
+
 https://youtu.be/ckcLnBqGQrQ
+
+
 Solution Approach 2
+-------------------
 In this one, I removed the usage of “airship-in-a-bottle.sh” and PROMENADE. I tried to deploy the cluster (with HELM2) and then deploy the bootstrap armada using the old manifests (saved using the initial days for reference).
+
 Following steps were performed: -
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
 2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
@@ -98,17 +132,17 @@ Following steps were performed: -
 4.	A Service account was created for the Tiller and was initiated using the 
 $ helm init –service-account tiller
 5.	In this bootstrap armada pod definition was modified to use only two containers: -
-a.	Armada
-b.	Monitor
+	a.	Armada
+	b.	Monitor
 Armada container was modified to connect with the Tiller that came with the HELM2.
 6.	The chart group “cluster-bootstrap-aiab” in the manifest.yaml used by Armada container was modified. Following chart groups were removed: -
-a.	podsecuritypolicy
-b.	kubernetes-proxy
-c.	kubernetes-container-networking
-d.	kubernetes-dns
-e.	kubernetes-etcd
-f.	kubernetes-haproxy
-g.	kubernetes-core
+	a.	podsecuritypolicy
+	b.	kubernetes-proxy
+	c.	kubernetes-container-networking
+	d.	kubernetes-dns
+	e.	kubernetes-etcd
+	f.	kubernetes-haproxy
+	g.	kubernetes-core
 7.	On analyzing all the remaining members (and their dependencies as mentioned in the manifest.yaml) of the chart group “cluster-bootstrap-aiab “, could not find the dependency on the certificated. 
 8.	Created the new private key and certificate for the Armada (at location /etc/genesis/armada/auth/pki/) and updated kubeconfig file (at location /etc/genesis/armada/auth) as well so that using the “armada” user cluster could be accessed. 
 9.	Step 8 was repeated for armada-cli as well at location /etc/genesis/armada-cli/auth/pki/ and /etc/genesis/armada-cli/auth respectively
@@ -124,21 +158,26 @@ a.	Referred the following link and checked for the openssl version was it over 1
 https://airshipit.readthedocs.io/projects/armada/en/latest/operations/guide-troubleshooting.html
 b.	Along with “urllib3”, there were some dependent python packages that were needed. Referred to the old captured logs and saw few of them were installed by the genesis.sh. So installed all of them.
 c.	Still the error persisted, and it was later identified that the armada public key was not correctly generated. On creating it again, it worked.
+
 2.	Armada started the deployment of the first chart group “ingress-kube-system” but it timed-out. On looking at the pod status, it was in pending state.
-Solution: -
-In this case scheduler pod was still in running state. So, looked at the description of the pod to understand the reason for not being deployed. 
+
+Solution: - In this case scheduler pod was still in running state. So, looked at the description of the pod to understand the reason for not being deployed. 
 The reason was nodeSelector had failed to select the node.
 Then looking into genesis.sh, it was identified that a label was applied to ensure where exactly pod gets deployed. Hence following command was executed.
 $ kubectl label node <node_name> --overwrite beta.kubernetes.io/fluentd-ds-ready=true calico-etcd=enabled kube-dns=enabled kube-ingress=enabled kubernetes-apiserver=enabled kubernetes-controller-manager=enabled kubernetes-etcd=enabled kubernetes-scheduler=enabled promenade-genesis=enabled ucp-control-plane=enabled maas-rack=enabled maas-region=enabled openstack-control-plane=enabled openvswitch=enabled openstack-l3-agent=enabled node-exporter=enabled fluentd=enabled openstack-control-plane=enabled openstack-nova-compute=enabled openstack-libvirt=kernel utility=enabled
 
 3.	After the deployment of the second chart group “osh-infra-nfs-provisioner” it again got stuck with the following error from the armada: - 
+
 Solution: -
 Could not fix this. Thought that may be because of the older chart groups skipped. So, went to approach 3.
+
 Solution Approach 3
+-------------------
 This one is the same as Approach 2, with the following differences 
 1.	Chart group “cluster-bootstrap-aiab” has not been modified.
 2.	Unchanged bootstrap armada Pod and auxiliary ETCD pod have been used.
 New certificated were created for the first few chart group members of “cluster-bootstrap-aiab”, to see the behavior.
+
 Challenge faced: -
 1.	On deployment of the bootstrap armada and auxiliary ETCD static pods, following error is observed: -
 2020-05-20 11:40:49.350 10 ERROR armada.cli [-] Caught unexpected exception: urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='localhost', port=6444): Max retries exceeded with url: /apis/armada.process/v1/namespaces/kube-system/locks (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f43e4bfb908>: Failed to establish a new connection: [Errno 111] Connection refused',))
@@ -150,14 +189,19 @@ Challenge faced: -
 2020-05-20 11:40:49.350 10 ERROR armada.cli   File "/usr/local/lib/python3.5/dist-packages/urllib3/util/connection.py", line 74, in create_connection
 2020-05-20 11:40:49.350 10 ERROR armada.cli     sock.connect(sa)
 2020-05-20 11:40:49.350 10 ERROR armada.cli ConnectionRefusedError: [Errno 111] Connection refused
+
 Solution: - This one still needs to be debugged.
 
 Cluster creation without using the Kubeadm Binaries
+---------------------------------------------------
+
 Pre-Requisite
 1.	2 Ubuntu 16.04 virtual machines, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
+
 NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
+
 Steps Performed
 1.	Switch to the root user.
 $ sudo su -
@@ -212,12 +256,15 @@ $ kubectl get nodes
 
 
 Docker Registry Creation
+------------------------
+
 Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage
 2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
 3.	Host Network configured with SSH daemon running
 4.	Packages like curl are installed on the machine.
 NOTE: - Since this task was tested initially as a stand-alone hence the dependent packages were installed from the Ubuntu mirror and not from the Local Repository
+
 Steps Performed
 	Login to the machine with 32 GB Storage option.
 1.	Switch to the root user.
@@ -249,6 +296,7 @@ $ openssl req -newkey rsa:4096 -nodes -sha256 -subj “/CN=myregistrydomain.com�
 127.0.1.1       dockerRegistry
 <IP address>  myregistrydomain.com
 NOTE: We need to add an entry for the myregistrydomain.com on all the docker nodes from where we need to access the local registry. And IP address would be for the machine which is hosting the registry.
+
 Insert a Docker image in the local registry
 Login to the machine hosting the docker registry
 1.	Login to docker registry created above
@@ -268,6 +316,7 @@ $ docker push myregistrydomain.com:443/my-ubuntu
 $ docker image rm myregistrydomain.com:443/my-ubuntu
 $ docker image rm ubuntu:16.04
 $ docker pull myregistrydomain.com:443/my-ubuntu
+
 Testing of the Registry
 Login to the second machine with 10 GB storage
 1.	Switch to the root user.
@@ -288,12 +337,16 @@ Login Succeeded
 
 4.	Try to pull the ubuntu:16.04 image from the local repository
 $ docker pull myregistrydomain.com:443/my-ubuntu
+
 Local Ubuntu Repository Creation
+--------------------------------
+
 Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 10 GB storage
 2.	Host Network configured with SSH daemon running
 3.	Packages like curl are installed on the machine.
 4.	Access to the machine and captured logs where “Airship in a Bottle” Deployment using the TreasureMap was executed.
+
 Steps Performed
 1.	Switch to the root user.
 $ sudo su –
@@ -315,7 +368,10 @@ deb file:/usr/local/mydebs ./
 6.	Once the sources.list is updated, apt-get was also updated. 
 	$ apt-get update
 With this the packages present in the mydebs can be installed in the offline mode as well.
+
 Airship in a Bottle using local docker registry and Ubuntu Repository
+---------------------------------------------------------------------
+
 Pre-Requisite
 1.	1 Ubuntu 16.04 virtual machine, with 4 GB RAM, 9 vCPUs and 32 GB storage for Airship deployment.
 2.	1 Ubuntu 16.04 virtual machine, with 2 GB RAM, 2 vCPUs and 32 GB storage with a working local docker registry. (It was created using the steps mentioned in Docker Registry Creation section.
