@@ -15,14 +15,14 @@ https://github.com/airshipit/treasuremap
 
 ## Activities
 
-For this the first activity I undertook had planned to perform the tasks independently first and once completed, to combine them as a complete solution.
-The initial focus was to understand what Airship is and try to be familiar with the Treasure Map link provided. Main approach was to be able to deploy “Airship in a Bottle” using the kubeadm and have a step ready. After that combine it to use the local docker registry and local ubuntu repository. 
-Approaches done to get understand and deploy “Airship in a bottle” are covered under section Airship understanding and Deployment.
-Along with this a separate Cluster was also created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section Cluster creation without using the Kubeadm Binaries for more details on the steps performed.
-A local Docker Registry was also created on a separate machine and was used to refer for the docker images. Steps for creating the Docker Registry are captured under the section Docker Registry Creation.
-A local Ubuntu repository was also created comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section Local Ubuntu Repository Creation for more details about the steps performed.
+For this the first activity I undertook had planned to perform the tasks independently first and once completed, to combine them as a complete solution. Following are the tasks which were performed to accomplish the solution.
+1.	The initial focus was to understand what Airship is and try to be familiar with the Treasure Map link provided. Main focus of this activity was to be able to deploy “Airship in a Bottle” using the kubeadm and define the procedure for it. After that combine it to use the local docker registry and local ubuntu repository. 
+Various approaches undertaken to understand and deploy “Airship in a bottle” are covered under section Airship understanding and Deployment.
+2.	A separate Cluster was also created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section Cluster creation without using the Kubeadm Binaries for more details on the steps performed.
+3.	Local Docker Registry was created on a separate machine and was used to refer for the docker images. Steps for creating the Docker Registry are captured under the section Docker Registry Creation.
+4.	Local Ubuntu repository was also created comprising of all the packages required for the deployment of the Airship in a Bottle. For this dpkg-dev was used. Refer section Local Ubuntu Repository Creation for more details about the steps performed.
+5.	Deployed the “Airship in a Bottle” using the method defined in the treasuremap, with access to the local docker registry and Local Ubuntu Repository. Refer to section Airship in a Bottle using local docker registry and Ubuntu Repository for the steps executed and changes done to make it run.
 
-It was later also tried to deploy the “Airship in a Bottle” using the method defined in the treasuremap, with access to the local docker registry and Local Ubuntu Repository. Refer to section Airship in a Bottle using local docker registry and Ubuntu Repository for the steps executed and changes done to make it run.
 
 ## Airship understanding and Deployment
 
@@ -69,7 +69,10 @@ Following is my understanding: -
 		i.	Place the segregated certificates, charts to be used.
 		ii.	Place the static pod yaml files to start the control node pods
 		iii.	These static pods also include the pods to deploy armada bootstrapping and auxiliary ETCD. 
-		iv.	Start the kubelet and let armada deploy the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
+		iv.	Start the kubelet. 
+		v.	Bootstrap armada deploys the aiab using the information as present in the manifest.yaml which is created from the treasuremap.yaml and placed at location “/etc/genesis/armada/assets/”
+NOTE: Bootstrap Armada, is responsible for the deployment of the kubernetes control plane pods, networking, UCP components like promenade, armada, barbican, deckhand etc.
+
 
 ### Treasuremap Folder Structuring
 
