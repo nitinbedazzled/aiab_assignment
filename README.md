@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-The activity was to be able to deploy “Airship in a Bottle” with following of the tasks to be completed while performing the activity: -
+The activity was to be able to deploy “Airship in a Bottle” with following tasks to be completed while performing the activity: -
 1. Use kubeadm, kubectl, kubeadm binaries. Don't use apt to install these packages.
 2. Setup a local ubuntu repo to install other packages if required. Don't directly install packages from ubuntu mirrors or any other public repos.
 3. Don’t use any docker images from public repos (e.g.: quay.io, dockerhub.com, gcr.io etc.). Setup a local docker images registry for docker images. 
@@ -15,7 +15,10 @@ https://github.com/airshipit/treasuremap
 
 ## Activities
 
-For this the first activity I undertook had planned to perform the tasks independently first and once completed, to combine them as a complete solution. Following are the tasks which were performed to accomplish the solution.
+For this the planning was to perform the tasks independently first and once completed, to combine them as a complete solution. The critical area of this planning was to understand and then to be able to deploy the Airship in a bottle using the kubeadm.
+
+Following are the tasks which were performed to accomplish the solution.
+
 1.	The initial focus was to understand what Airship is and try to be familiar with the Treasure Map link provided. Main focus of this activity was to be able to deploy “Airship in a Bottle” using the kubeadm and define the procedure for it. After that combine it to use the local docker registry and local ubuntu repository. 
 Various approaches undertaken to understand and deploy “Airship in a bottle” are covered under section Airship understanding and Deployment.
 2.	A separate Cluster was also created using the kubeadm and kubectl binaries (without the usage of the apt to install the packages). Refer the section Cluster creation without using the Kubeadm Binaries for more details on the steps performed.
