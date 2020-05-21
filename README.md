@@ -1,7 +1,7 @@
-Airship in a Bottle
+###Airship in a Bottle
 ===================
 
-Problem Statement
+##Problem Statement
 -----------------
 
 The activity was to be able to deploy “Airship in a Bottle” with following of the tasks to be completed while performing the activity: -
@@ -79,7 +79,8 @@ A high-level folder structure (not covering all the files) was created so that i
 For this PEGLEG documentation was also read to get more clarity: -
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
 This is not extensive but gives a high-level view.
- 
+
+./Diagrams/Folder_structure.png
  
 Solution Approach 1
 -------------------
