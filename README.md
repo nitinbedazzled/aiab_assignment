@@ -75,7 +75,7 @@ For this PEGLEG documentation was also read to get more clarity: -
 https://airshipit.readthedocs.io/projects/pegleg/en/latest/getting_started.html
 This is not extensive but gives a high-level view.
 
-:: ./Diagrams/Folder_structure.png
+![Folder Structure](./Diagrams/Folder_structure.png)
  
 ### Solution Approach 1
 
