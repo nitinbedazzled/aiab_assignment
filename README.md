@@ -590,6 +590,90 @@ NOTE: For generation of the certificate following files were referred: -
 	```
 **Solution:** - This is still not resolved. On further analysis, it was observed that even the auxillary ETCD Pod which hosts a cluster of the etcd were giving the TLS certificate issue. So it was identified to be something with certificate it was not right. Chances of error were high as a lot certificates were manually created and placed at multiple locations including the manifest.yaml file referred by the armada as well.
 
+### 6.8  Understanding Promenade
+
+Since the part of the assignment is to replace promenade by kubeadm for the deployment of the Airship in a Bottle, hence promenade code was studied. Code was checked out using the following url: -
+
+https://opendev.org/airship/promenade
+
+Following is the high level identified data directory structure (this is not extensive, tried to cover details which were referred):-
+ 
+ ![Folder Structure](./Diagrams/Folder_structure.png)
+
+### 6.9 Solution Approach 3 (cotd.)
+
+Started with implementing this approach from the scratch. Following Steps were performed :- 
+
+1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
+
+2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
+
+3.	On this Node, all the taints were removed, and now the HELM 2 was deployed. Tiller was started on it. 
+
+4.	For the certification creation, airship-in-a-bottle.sh (which is part of the treasuremap) was executed with a hard-stop before the execution of the genesis.sh. (This step is planned to be done using a new script and not to use the promenade and will be done once a solution is identified).
+
+5.	Certificates.yaml was then used to extract all the corresponding certificates and place them at the appropriate places as identified during the **6.1 “Airship in a Bottle” Deployment using the TreasureMap**. Including the manifest.yaml was updated (This step was right now done manually just to verify if this works, with a plan to automate it later).
+
+6.	Bootstrap armada and auxiliary etcd manifests were placed under /etc/kubernetes/manifest.
+
+**Challenge faced:**
+
+1.	On monitoring Armada logs (/var/log/armada/bootstrap-armada.log) it is observed that armada started well, and cloned the repos and started even deployed the first chart group podsecuritypolicy. But when it went for the second chart group kubernetes-proxy, it did build the dependency chart kubernetes-proxy-htk and gave installation complete result from tiller, but then it TIMEDOUT while waiting for the resources to be deployed (i.e. jobs and pods)
+
+```
+2020-05-28 16:33:19.640 11 INFO armada.handlers.chart_deploy [-] [chart=kubernetes-proxy]: Processing Chart, release=airship-kubernetes-proxy^[[00m
+2020-05-28 16:33:19.641 11 INFO armada.handlers.chart_deploy [-] [chart=kubernetes-proxy]: known: [], release_name: airship-kubernetes-proxy^[[00m
+2020-05-28 16:33:19.641 11 INFO armada.handlers.chartbuilder [-] [chart=kubernetes-proxy]: Building chart kubernetes-proxy from path /tmp/armadaqcmfvxaj/charts/proxy^[[00m
+2020-05-28 16:33:19.641 11 INFO armada.handlers.chartbuilder [-] [chart=kubernetes-proxy]: Building dependency chart kubernetes-proxy-htk for chart kubernetes-proxy.^[[00m
+2020-05-28 16:33:19.641 11 INFO armada.handlers.chartbuilder [-] [chart=kubernetes-proxy]: Building chart kubernetes-proxy-htk from path /tmp/armada6yua_tli/helm-toolkit^[[00m
+2020-05-28 16:33:19.652 11 INFO armada.handlers.chart_deploy [-] [chart=kubernetes-proxy]: Installing release airship-kubernetes-proxy in namespace kube-system, wait=True, timeout=600s^[[00m
+2020-05-28 16:33:19.654 11 INFO armada.handlers.tiller [-] [chart=kubernetes-proxy]: Helm install release: wait=True, timeout=600^[[00m
+2020-05-28 16:33:21.855 11 INFO armada.handlers.chart_deploy [-] [chart=kubernetes-proxy]: Install completed with results from Tiller: {'namespace': 'kube-system', 'version': 1, 'description': 'Install complete', 'status': 'DEPLOYED', 'release': 'airship-kubernetes-proxy'}^[[00m
+2020-05-28 16:33:21.855 11 INFO armada.handlers.wait [-] [chart=kubernetes-proxy]: Waiting for resource type=job, namespace=kube-system labels=release_group=airship-kubernetes-proxy required=False for 598s^[[00m
+2020-05-28 16:33:21.865 11 INFO armada.handlers.wait [-] [chart=kubernetes-proxy]: Waiting for resource type=pod, namespace=kube-system labels=release_group=airship-kubernetes-proxy required=True for 598s^[[00m
+2020-05-28 16:43:19.887 11 ERROR armada.handlers.wait [-] [chart=kubernetes-proxy]: Timed out waiting for pods (namespace=kube-system, labels=(release_group=airship-kubernetes-proxy)). None found! Are `wait.labels` correct? Does `wait.resources` need to exclude `type: pod`?^[[00m
+2020-05-28 16:43:19.887 11 ERROR armada.handlers.armada [-] Chart deploy [kubernetes-proxy] failed: armada.exceptions.k8s_exceptions.KubernetesWatchTimeoutException: Timed out waiting for pods (namespace=kube-system, labels=(release_group=airship-kubernetes-proxy)). None found! Are `wait.labels` correct? Does `wait.resources` need to exclude `type: pod`?
+2020-05-28 16:43:19.887 11 ERROR armada.handlers.armada Traceback (most recent call last):
+2020-05-28 16:43:19.887 11 ERROR armada.handlers.armada   File "/usr/local/lib/python3.5/dist-packages/armada/handlers/armada.py", line 235, in handle_result
+2020-05-28 16:43:19.887 11 ERROR armada.handlers.armada     result = get_result()
+```
+
+**Solution** :- 
+Since there was no other operational error, so tried to debug the system to see if everything else is working fine, because it seemed that Armada and Tiller did their work, but somehow this information was not relayed to the api-server (which was deployed by the Kubeadm) hence the resources were not deployed. 
+It was identified that on the auxiliary etcd pod there were errors related to the x509 certificates. This lead to the challenge number 2.
+
+2.	On inspecting the system, it was observed that following errors were seen at the auxiliary etcd containers and etcd pod (deployed using the kubeadm).
+
+```
+$ kubectl -n kube-system logs auxiliary-etcd-aiab6 etcd-auxiliary-0 | grep -i x509
+2020-05-29 15:02:38.472063 W | etcdserver: failed to reach the peerURL(https://192.168.56.160:2380) of member ad862a5e08c75dff (Get https://192.168.56.160:2380/version: x509: certificate signed by unknown authority)
+2020-05-29 15:02:38.472088 W | etcdserver: cannot get the version of member ad862a5e08c75dff (Get https://192.168.56.160:2380/version: x509: certificate signed by unknown authority)
+
+$ kubectl -n kube-system logs auxiliary-etcd-aiab6 etcd-auxiliary-1 | grep -i x509
+2020-05-29 15:02:52.742518 W | rafthttp: health check for peer ad862a5e08c75dff could not connect: x509: certificate signed by unknown authority
+2020-05-29 15:02:52.776799 W | rafthttp: health check for peer ad862a5e08c75dff could not connect: x509: certificate signed by unknown authority
+
+$ kubectl -n kube-system logs etcd-aiab6
+2020-05-29 15:02:52.093414 I | embed: rejected connection from "192.168.56.160:49426" (error "remote error: tls: bad certificate", ServerName "")
+2020-05-29 15:02:52.097693 I | embed: rejected connection from "192.168.56.160:49428" (error "remote error: tls: bad certificate", ServerName "")
+2020-05-29 15:02:52.105148 I | embed: rejected connection from "192.168.56.160:49430" (error "remote error: tls: bad certificate", ServerName "")
+2020-05-29 15:02:52.111671 I | embed: rejected connection from "192.168.56.160:49432" (error "remote error: tls: bad certificate", ServerName "")
+2020-05-29 15:02:52.151717 I | embed: rejected connection from "192.168.56.160:49434" (error "remote error: tls: bad certificate", ServerName "")
+```
+
+**Solution**: There it was seen that certificate issue existed. For this the certificates for the manifests deployed by the kubeadm were also updated to ensure that the etcd cluster is operational correctly and no such connectivity issue is observed.
+
+3.	On updating the certificates, following two things are observed:-
+
+a.	The logs in the etcd containers have the following error message:-
+rafthttp: request sent was ignored (cluster ID mismatch: peer[ad862a5e08c75dff]=e3fb7fb63f5ca5c5, local=43307db524d622b2)
+
+
+b.	Kubectl is not working as earlier it used to refer to the ~/.kube/config, but those certificates wont work as those were generated by the kubeadm. The above logs were captured using the DOCKER commands.
+
+
+**Solution** : It is in-progress as of now.
+
 
 ## 7. Airship in a Bottle using local docker registry and Ubuntu Repository
 
