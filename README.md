@@ -592,27 +592,27 @@ NOTE: For generation of the certificate following files were referred: -
 
 ### 6.8  Understanding Promenade
 
-Since the part of the assignment is to replace promenade by kubeadm for the deployment of the Airship in a Bottle, hence promenade code was studied. Code was checked out using the following url: -
+Since the part of the assignment is to replace **Promenade** by **kubeadm** for the deployment of the Airship in a Bottle, hence promenade code was studied. Code was checked out using the following url: -
 
 https://opendev.org/airship/promenade
 
 Following is the high level identified data directory structure (this is not extensive, tried to cover details which were referred):-
  
- ![Folder Structure](./Diagrams/Folder_structure.png)
+ ![Folder Structure](./Diagrams/Promenade_diag_structure.png)
 
 ### 6.9 Solution Approach 3 (cotd.)
 
-Started with implementing this approach from the scratch. Following Steps were performed :- 
+Started with implementing the same approach from the scratch. Following are the high level steps that were performed :- 
 
 1.	Created an Ubuntu 16.04 VM, 4 vCPUs, 9GB RAM, 32 GB storage
 
-2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section Cluster creation without using the Kubeadm Binaries.
+2.	Created a manager node using the kubeadm. (No worker node was deployed) For this used the same approach as stated in section **Cluster creation without using the Kubeadm Binaries**.
 
-3.	On this Node, all the taints were removed, and now the HELM 2 was deployed. Tiller was started on it. 
+3.	On this Node, all the taints were removed, and now the HELM 2 was deployed. Tiller was not started on it yet. 
 
 4.	For the certification creation, airship-in-a-bottle.sh (which is part of the treasuremap) was executed with a hard-stop before the execution of the genesis.sh. (This step is planned to be done using a new script and not to use the promenade and will be done once a solution is identified).
 
-5.	Certificates.yaml was then used to extract all the corresponding certificates and place them at the appropriate places as identified during the **6.1 “Airship in a Bottle” Deployment using the TreasureMap**. Including the manifest.yaml was updated (This step was right now done manually just to verify if this works, with a plan to automate it later).
+5.	Certificates.yaml was then used to extract all the corresponding certificates and place them at the appropriate locations as identified during the **6.1 “Airship in a Bottle” Deployment using the TreasureMap**. Including the manifest.yaml was updated (This step was right now done manually just to verify if this works, with a plan to automate it later).
 
 6.	Bootstrap armada and auxiliary etcd manifests were placed under /etc/kubernetes/manifest.
 
@@ -648,11 +648,13 @@ It was identified that on the auxiliary etcd pod there were errors related to th
 $ kubectl -n kube-system logs auxiliary-etcd-aiab6 etcd-auxiliary-0 | grep -i x509
 2020-05-29 15:02:38.472063 W | etcdserver: failed to reach the peerURL(https://192.168.56.160:2380) of member ad862a5e08c75dff (Get https://192.168.56.160:2380/version: x509: certificate signed by unknown authority)
 2020-05-29 15:02:38.472088 W | etcdserver: cannot get the version of member ad862a5e08c75dff (Get https://192.168.56.160:2380/version: x509: certificate signed by unknown authority)
-
+```
+```
 $ kubectl -n kube-system logs auxiliary-etcd-aiab6 etcd-auxiliary-1 | grep -i x509
 2020-05-29 15:02:52.742518 W | rafthttp: health check for peer ad862a5e08c75dff could not connect: x509: certificate signed by unknown authority
 2020-05-29 15:02:52.776799 W | rafthttp: health check for peer ad862a5e08c75dff could not connect: x509: certificate signed by unknown authority
-
+```
+```
 $ kubectl -n kube-system logs etcd-aiab6
 2020-05-29 15:02:52.093414 I | embed: rejected connection from "192.168.56.160:49426" (error "remote error: tls: bad certificate", ServerName "")
 2020-05-29 15:02:52.097693 I | embed: rejected connection from "192.168.56.160:49428" (error "remote error: tls: bad certificate", ServerName "")
@@ -661,9 +663,9 @@ $ kubectl -n kube-system logs etcd-aiab6
 2020-05-29 15:02:52.151717 I | embed: rejected connection from "192.168.56.160:49434" (error "remote error: tls: bad certificate", ServerName "")
 ```
 
-**Solution**: There it was seen that certificate issue existed. For this the certificates for the manifests deployed by the kubeadm were also updated to ensure that the etcd cluster is operational correctly and no such connectivity issue is observed.
+**Solution**: Here it was seen that certificate issue existed on the ETCD cluster. For this the certificates in the manifests deployed by the kubeadm were also updated with the ones generated using the Promenade to ensure that the etcd cluster is operational correctly and no such connectivity issue is observed.
 
-3.	On updating the certificates, following two things are observed:-
+3.	On updating the certificates, following two things were observed:-
 
 a.	The logs in the etcd containers have the following error message:-
 rafthttp: request sent was ignored (cluster ID mismatch: peer[ad862a5e08c75dff]=e3fb7fb63f5ca5c5, local=43307db524d622b2)
