@@ -665,6 +665,7 @@ $ kubectl -n kube-system logs etcd-aiab6
 
 **Solution**: Here it was seen that certificate issue existed on the ETCD cluster. For this the certificates in the manifests deployed by the kubeadm were also updated with the ones generated using the Promenade to ensure that the etcd cluster is operational correctly and no such connectivity issue is observed.
 
+
 3.	On updating the certificates, following two things were observed:-
 
 a.	The logs in the etcd containers have the following error message:-
@@ -681,18 +682,23 @@ a.	This is still pending as while solving the point b, cluster got corrupted.
 
 b.	This was occurring for multiple reasons. 
 	
-	First the apiserver was not working. Docker logs of the apiserver container were inspected before the container crashed.
-	```
-	Error: failed to initialize admission: couldn't init admission plugin "EventRateLimit": limits: Invalid value: []eventratelimit.Limit(nil): must not be empty
-	```
+First the apiserver was not working. Docker logs of the apiserver container were inspected before the container crashed.
+	
+```
+Error: failed to initialize admission: couldn't init admission plugin "EventRateLimit": limits: Invalid value: []eventratelimit.Limit(nil): must not be empty
+```
 	
 The entry in the config file said
-	```
-	- --enable-admission-plugins=PodSecurityPolicy,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds,NodeRestriction, EventRateLimit.
-	```
-	So in this EventRateLimit was removed from the manifest. This line was added after looking at the apiserver manifest created by the genesis
-	Another issue was related to the certificates referred in the kubelet config file as mentioned in the “/var/lib/kubelet/config.yaml” which is referred by the kubelet service was also modified.
-	Modified /etc/kubernetes/kubelet.conf to refer the correct certificates and the user to access the cluster as well.
+
+```
+- --enable-admission-plugins=PodSecurityPolicy,NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds,NodeRestriction, EventRateLimit.
+```
+	
+So in this EventRateLimit was removed from the manifest. This line was added after looking at the apiserver manifest created by the genesis.
+	
+Another issue was related to the certificates referred in the kubelet config file as mentioned in the “/var/lib/kubelet/config.yaml” which is referred by the kubelet service was also modified.
+	
+Modified /etc/kubernetes/kubelet.conf to refer the correct certificates and the user to access the cluster as well.
 
 
 
