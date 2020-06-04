@@ -700,7 +700,7 @@ Another issue was related to the certificates referred in the kubelet config fil
 	
 Modified /etc/kubernetes/kubelet.conf to refer the correct certificates and the user to access the cluster as well.
 
-
+To make it further accessible some more changes were done, which led to making it unstable, hence the few static pods like apiserver, controller-manager stopped getting deployed.
 
 ## 7. Airship in a Bottle using local docker registry and Ubuntu Repository
 
